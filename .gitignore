@@ -1,0 +1,48 @@
+# --- Secrets: NEVER commit these ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# --- Local databases / dumps (never commit user data) ---
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
+backups/
+
+# --- Uploaded files in local dev ---
+backend/uploads/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dev-dist/
+.vite/
+*.local
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+logs/
