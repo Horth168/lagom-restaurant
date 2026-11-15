@@ -22,3 +22,4 @@ POS and the admin dashboard.
 ## Guides
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Run LAGOM on Windows](docs/WINDOWS_SETUP.md)
