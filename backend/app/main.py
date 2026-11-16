@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import (auth, finance, inventory, kds, menu_admin, orders_admin, orders_public, payments_admin, pos,
+from app.api import (audit_log, auth, finance, inventory, kds, menu_admin, orders_admin, orders_public, payments_admin, pos,
                      public, settings, staff, tables)
 from app.services import inventory as _inventory_hooks  # noqa: F401  (deducts stock when orders are paid)
 from app.config import get_settings
@@ -91,6 +91,23 @@ def create_app() -> FastAPI:
         response.headers.setdefault("X-Frame-Options", "DENY")
         return response
 
+    # Error messages in the user's language (see app/i18n.py)
+    from fastapi import HTTPException as _HTTPException
+    from fastapi.exception_handlers import http_exception_handler
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    from app.i18n import pick_language, translate
+
+    @app.exception_handler(StarletteHTTPException)
+    async def translated_http_error(request, exc):
+        lang = pick_language(request.headers.get("accept-language"))
+        detail = exc.detail
+        if isinstance(detail, str):
+            detail = translate(detail, lang)
+        elif isinstance(detail, dict) and isinstance(detail.get("message"), str):
+            detail = {**detail, "message": translate(detail["message"], lang)}
+        return await http_exception_handler(request, _HTTPException(exc.status_code, detail, getattr(exc, "headers", None)))
+
     @app.get("/api/health", tags=["system"])
     def health():
         with engine.connect() as conn:
@@ -99,7 +116,7 @@ def create_app() -> FastAPI:
 
     for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
               payments_admin.router, kds.router, menu_admin.router, orders_admin.router, pos.router,
-              inventory.router, finance.router):
+              inventory.router, finance.router, audit_log.router):
         app.include_router(r)
     # Product photos saved on this server (when Cloudflare R2 is not configured)
     from fastapi.staticfiles import StaticFiles

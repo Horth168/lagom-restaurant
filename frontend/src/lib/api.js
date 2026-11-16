@@ -11,13 +11,22 @@ export class ApiError extends Error {
   }
 }
 
+// Server messages come back in the language the person chose (see backend app/i18n.py)
+function currentLang() {
+  try {
+    return localStorage.getItem('lagom.lang') || document.documentElement.lang || 'en'
+  } catch {
+    return 'en'
+  }
+}
+
 export async function api(path, { method = 'GET', body, headers = {}, signal } = {}) {
   let res
   try {
     res = await fetch(BASE + path, {
       method,
       signal,
-      headers: { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...headers },
+      headers: { 'Accept-Language': currentLang(), ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...headers },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch (e) {

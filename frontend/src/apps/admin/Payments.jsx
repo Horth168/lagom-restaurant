@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Badge, Button, Card, inputCls, parseUsd, Skeleton, useToast } from '../../components/ui'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { formatKHR, formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
 import { useStaff } from '../../lib/staffAuth'
@@ -108,7 +108,7 @@ export default function Payments() {
                     <span className="font-semibold">{n.currency === 'KHR' ? formatKHR(n.amount_minor) : formatUSD(n.amount_minor)} · {n.payer}</span>
                     <Badge tone="warn">{t(`admin.pay.${n.outcome}`)}</Badge>
                   </div>
-                  <div className="mt-1 text-xs text-muted">ABA Trx {n.trx_id} · {new Date(n.received_at).toLocaleString()}</div>
+                  <div className="mt-1 text-xs text-muted">ABA Trx {n.trx_id} · {new Date(n.received_at).toLocaleString(appLocale())}</div>
                   {can('payments.cash') && (
                     <div className="mt-2 flex gap-2">
                       <select className={inputCls} value={assign[n.id] || ''} onChange={(e) => setAssign((a) => ({ ...a, [n.id]: e.target.value }))} aria-label={t('admin.pay.chooseOrder')}>

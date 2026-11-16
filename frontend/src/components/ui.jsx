@@ -1,6 +1,7 @@
 /* Small shared UI kit for staff screens (admin + POS). */
 import { createContext, useCallback, useContext, useState } from 'react'
 import { CheckCircle2, X, XCircle } from 'lucide-react'
+import { useI18n } from '../i18n'
 
 export function Card({ title, action, children, className = '' }) {
   return (
@@ -74,6 +75,7 @@ export function Skeleton({ className = '' }) {
 const ToastCtx = createContext(() => {})
 
 export function ToastProvider({ children }) {
+  const { t } = useI18n()
   const [items, setItems] = useState([])
   const push = useCallback((message, tone = 'good') => {
     const id = Math.random().toString(36).slice(2)
@@ -88,7 +90,7 @@ export function ToastProvider({ children }) {
           <div key={x.id} className="pointer-events-auto flex items-center gap-3 rounded-xl bg-ink px-4 py-3 text-sm text-bg shadow-xl animate-fade-in">
             {x.tone === 'bad' ? <XCircle size={18} className="text-[#ff9b8a]" /> : <CheckCircle2 size={18} className="text-[#9fd49a]" />}
             {x.message}
-            <button onClick={() => setItems((xs) => xs.filter((y) => y.id !== x.id))} aria-label="Close" className="opacity-60">
+            <button onClick={() => setItems((xs) => xs.filter((y) => y.id !== x.id))} aria-label={t('common.close')} className="opacity-60">
               <X size={14} />
             </button>
           </div>

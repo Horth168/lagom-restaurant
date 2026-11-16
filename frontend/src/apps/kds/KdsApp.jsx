@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Bell, BellOff, Check, Flag, LogOut, Maximize, Minimize, StickyNote } from 'lucide-react'
 import { Mark } from '../../components/Logo'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { useLiveChannel } from '../../lib/realtime'
 import { useStaff } from '../../lib/staffAuth'
 import { chime } from './sound'
@@ -201,7 +201,7 @@ function IconButton({ label, onClick, children }) {
 
 function Clock() {
   const now = useNow(15000)
-  return <span className="mr-1 text-lg font-semibold tabular-nums text-cream/80">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+  return <span className="mr-1 text-lg font-semibold tabular-nums text-cream/80">{now.toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' })}</span>
 }
 
 function useNow(ms = 1000) {

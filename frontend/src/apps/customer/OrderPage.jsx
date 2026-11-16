@@ -343,7 +343,7 @@ function TrackingView({ order }) {
       </section>
 
       {!cancelled && (
-        <ol className="mx-auto mt-8 max-w-sm" aria-label="Order progress">
+        <ol className="mx-auto mt-8 max-w-sm" aria-label={t('track.progress')}>
           {STEPS.map((s, i) => {
             const done = i <= current
             return (

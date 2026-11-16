@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -50,6 +51,19 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)):
 @router.get("/me", response_model=MeOut)
 def me(staff: CurrentStaff = Depends(get_current_staff)):
     return me_out(staff.user)
+
+
+class MeUpdate(BaseModel):
+    preferred_language: str = Field(pattern="^(en|km|zh)$")
+
+
+@router.patch("/me", response_model=MeOut)
+def update_me(body: MeUpdate, staff: CurrentStaff = Depends(get_current_staff), db: Session = Depends(get_db)):
+    """Staff choose their own language; the app opens in it next time they sign in."""
+    user = db.get(User, staff.id)
+    user.preferred_language = body.preferred_language
+    db.commit()
+    return me_out(user)
 
 
 @router.post("/change-password", status_code=204)

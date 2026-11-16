@@ -4,6 +4,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { api, ApiError } from './api'
+import { useI18n } from '../i18n'
 
 const KEY = 'lagom.staff'
 const Ctx = createContext(null)
@@ -20,6 +21,7 @@ function load() {
 
 export function StaffAuthProvider({ children }) {
   const [auth, setAuth] = useState(load)
+  const { setLang } = useI18n()
 
   const login = useCallback(async (email, password) => {
     const r = await api('/api/auth/login', { method: 'POST', body: { email, password } })
@@ -30,8 +32,9 @@ export function StaffAuthProvider({ children }) {
       /* ignore */
     }
     setAuth(value)
+    if (value.user.preferred_language) setLang(value.user.preferred_language) // open in their language
     return value.user
-  }, [])
+  }, [setLang])
 
   const logout = useCallback(() => {
     try {
@@ -55,8 +58,26 @@ export function StaffAuthProvider({ children }) {
     [auth, logout],
   )
 
+  // Remember a language change on the staff account too
+  const saveLanguage = useCallback(
+    async (code) => {
+      setLang(code)
+      if (!auth?.token) return
+      try {
+        const user = await api('/api/auth/me', { method: 'PATCH', body: { preferred_language: code }, headers: { Authorization: `Bearer ${auth.token}` } })
+        const next = { ...auth, user }
+        localStorage.setItem(KEY, JSON.stringify(next))
+        setAuth(next)
+      } catch {
+        /* the screen language still changed */
+      }
+    },
+    [auth, setLang],
+  )
+
   const value = useMemo(
     () => ({
+      saveLanguage,
       user: auth?.user ?? null,
       token: auth?.token ?? null,
       can: (perm) => !!auth?.user?.permissions?.includes(perm),
@@ -64,7 +85,7 @@ export function StaffAuthProvider({ children }) {
       logout,
       staffApi,
     }),
-    [auth, login, logout, staffApi],
+    [auth, login, logout, staffApi, saveLanguage],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

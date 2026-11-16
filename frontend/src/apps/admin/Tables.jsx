@@ -93,9 +93,9 @@ export default function Tables() {
         </Card>
         <Card title={t('admin.tables.add')}>
           <form onSubmit={add} className="space-y-3">
-            <Field label={t('admin.tables.name')}><input required className={inputCls} value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Table 13" /></Field>
+            <Field label={t('admin.tables.name')}><input required className={inputCls} value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder={t('admin.tables.nameExample')} /></Field>
             <Field label={t('admin.tables.seatsLabel')}><input type="number" min="1" max="50" className={inputCls} value={form.seats} onChange={(e) => setForm({ ...form, seats: e.target.value })} /></Field>
-            <Field label={t('admin.tables.area')}><input className={inputCls} value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Terrace" /></Field>
+            <Field label={t('admin.tables.area')}><input className={inputCls} value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder={t('admin.tables.areaExample')} /></Field>
             <Button variant="primary" className="w-full"><Plus size={16} /> {t('admin.tables.add')}</Button>
           </form>
           <p className="mt-4 text-xs text-muted">{t('admin.tables.hint')}</p>

@@ -3,7 +3,7 @@ import { Printer, Search } from 'lucide-react'
 import { Receipt, printSoon } from '../../components/Receipt'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Button, Card, Field, inputCls, Skeleton, STATUS_TONE, useToast } from '../../components/ui'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { formatKHR, formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
 import { useStaff } from '../../lib/staffAuth'
@@ -80,7 +80,7 @@ export default function Orders() {
                 {data.orders.map((o) => (
                   <tr key={o.public_id} onClick={() => setOpenId(o.public_id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-surface-2">
                     <td className="px-5 py-3 font-semibold tabular-nums">{o.number}</td>
-                    <td className="px-3 py-3 text-muted tabular-nums">{new Date(o.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td className="px-3 py-3 text-muted tabular-nums">{new Date(o.created_at).toLocaleString(appLocale(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                     <td className="px-3 py-3">{o.table || t(`channel.${o.channel}`)}</td>
                     <td className="px-3 py-3 tabular-nums">{o.items_count}</td>
                     <td className="px-3 py-3">{o.payment_method ? t(`pay.${o.payment_method}`) : '—'}</td>
@@ -149,7 +149,7 @@ export function OrderDetail({ publicId, onClose, onChanged }) {
           <div className="flex items-start justify-between gap-3 pr-10">
             <div>
               <h2 className="font-display text-3xl">#{o.number}</h2>
-              <p className="text-sm text-muted">{o.table || t(`channel.${o.channel}`)} · {new Date(o.created_at).toLocaleString()}</p>
+              <p className="text-sm text-muted">{o.table || t(`channel.${o.channel}`)} · {new Date(o.created_at).toLocaleString(appLocale())}</p>
             </div>
             <Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}`)}</Badge>
           </div>

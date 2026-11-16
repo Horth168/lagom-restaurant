@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Card, inputBase, Skeleton } from '../../components/ui'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
 import { useStaff } from '../../lib/staffAuth'
@@ -142,7 +142,7 @@ function SalesChart({ points, byHour }) {
   const step = (W - L) / points.length
   const bw = Math.max(2, Math.min(28, step - 4))
   const y = (v) => T + (H - T - B) * (1 - v / nice)
-  const label = (p) => (byHour ? `${p.label}:00` : new Date(p.label + 'T00:00').toLocaleDateString([], { day: 'numeric', month: 'short' }))
+  const label = (p) => (byHour ? `${p.label}:00` : new Date(p.label + 'T00:00').toLocaleDateString(appLocale(), { day: 'numeric', month: 'short' }))
   const every = Math.ceil(points.length / 8)
   if (!points.some((p) => p.usd_cents)) return <p className="py-16 text-center text-sm text-muted">{t('admin.noSales')}</p>
   return (

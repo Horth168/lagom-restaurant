@@ -278,7 +278,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
             {f.option_groups.map((g, gi) => (
               <div key={g.id ?? `n${gi}`} className="rounded-xl border border-line p-4">
                 <div className="flex flex-wrap items-end gap-3">
-                  <Field label={t('admin.menu.groupName')}><input className={inputCls} value={g.name_en} onChange={(e) => setGroup(gi, { name_en: e.target.value })} placeholder="Size" /></Field>
+                  <Field label={t('admin.menu.groupName')}><input className={inputCls} value={g.name_en} onChange={(e) => setGroup(gi, { name_en: e.target.value })} placeholder={t('admin.menu.groupExample')} /></Field>
                   <Field label={t('admin.menu.choice')}>
                     <select className={inputCls} value={g.selection} onChange={(e) => setGroup(gi, { selection: e.target.value })}>
                       <option value="SINGLE">{t('product.chooseOne')}</option>

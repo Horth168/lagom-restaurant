@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, History, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Button, Card, Field, inputCls, parseUsd, Skeleton, useToast } from '../../components/ui'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { formatUSD } from '../../lib/money'
 import { useStaff } from '../../lib/staffAuth'
 import { PageTitle } from './AdminApp'
@@ -177,7 +177,7 @@ function HistorySheet({ ingredient: i, onClose }) {
             {rows.map((m) => (
               <li key={m.id} className="flex items-center gap-3 py-2.5">
                 <Badge tone={Number(m.change) < 0 ? 'warn' : 'good'}>{t(`inv.kind.${m.kind}`)}</Badge>
-                <span className="flex-1 truncate text-muted">{m.note}<span className="block text-xs">{new Date(m.created_at).toLocaleString()}</span></span>
+                <span className="flex-1 truncate text-muted">{m.note}<span className="block text-xs">{new Date(m.created_at).toLocaleString(appLocale())}</span></span>
                 <span className={`tabular-nums font-semibold ${Number(m.change) < 0 ? 'text-danger' : 'text-series-1'}`}>{Number(m.change) > 0 ? '+' : ''}{num(m.change)}</span>
                 <span className="w-24 text-right tabular-nums text-muted">{num(m.balance_after)} {i.unit}</span>
               </li>

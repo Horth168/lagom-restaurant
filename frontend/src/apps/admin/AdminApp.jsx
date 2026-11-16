@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import {
   Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, QrCode, Receipt, Settings, ShoppingBag,
-  Sun, UtensilsCrossed, Wallet, X,
+  ScrollText, Sun, Users, UtensilsCrossed, Wallet, X,
 } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
 import { ToastProvider } from '../../components/ui'
@@ -18,6 +18,9 @@ const Tables = lazy(() => import('./Tables'))
 const SettingsPage = lazy(() => import('./SettingsPage'))
 const Inventory = lazy(() => import('./Inventory'))
 const Finance = lazy(() => import('./Finance'))
+const StaffPage = lazy(() => import('./StaffPage'))
+const AuditLog = lazy(() => import('./AuditLog'))
+const MyAccount = lazy(() => import('./MyAccount'))
 
 const NAV = [
   { to: 'overview', label: 'admin.nav.overview', icon: LayoutDashboard, perm: 'dashboard.view', el: <Overview /> },
@@ -27,6 +30,8 @@ const NAV = [
   { to: 'inventory', label: 'admin.nav.inventory', icon: Boxes, perm: 'inventory.view', el: <Inventory /> },
   { to: 'finance', label: 'admin.nav.finance', icon: Landmark, perm: 'finance.view', el: <Finance /> },
   { to: 'tables', label: 'admin.nav.tables', icon: QrCode, perm: 'tables.manage', el: <Tables /> },
+  { to: 'staff', label: 'admin.nav.staff', icon: Users, perm: 'staff.manage', el: <StaffPage /> },
+  { to: 'audit', label: 'admin.nav.audit', icon: ScrollText, perm: 'audit.view', el: <AuditLog /> },
   { to: 'settings', label: 'admin.nav.settings', icon: Settings, perm: 'settings.edit', el: <SettingsPage /> },
 ]
 
@@ -56,8 +61,9 @@ export default function AdminApp() {
 }
 
 function Shell({ items, children }) {
-  const { t, lang, setLang } = useI18n()
-  const { user, can, logout } = useStaff()
+  const { t, lang } = useI18n()
+  const { user, can, logout, saveLanguage } = useStaff()
+  const [account, setAccount] = useState(false)
   const [open, setOpen] = useState(false)
   const [theme, setTheme] = useState(currentTheme)
   const nextLang = LANGUAGES[(LANGUAGES.findIndex((l) => l.code === lang) + 1) % LANGUAGES.length]
@@ -91,12 +97,12 @@ function Shell({ items, children }) {
         )}
       </ul>
       <div className="border-t border-cream/10 p-3">
-        <div className="px-3 pb-2 text-sm">
+        <button onClick={() => setAccount(true)} className="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-cream/10" title={t('acct.title')}>
           <div className="font-medium">{user?.full_name}</div>
-          <div className="text-xs text-cream/60">{user?.role}</div>
-        </div>
+          <div className="text-xs text-cream/60">{t(`role.${user?.role}`)} · {t('acct.title')}</div>
+        </button>
         <div className="flex gap-1">
-          <button onClick={() => setLang(nextLang.code)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm text-cream/80 hover:bg-cream/10" title={t('lang.title')}>
+          <button onClick={() => saveLanguage(nextLang.code)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm text-cream/80 hover:bg-cream/10" title={t('lang.title')}>
             <Globe size={16} /> {nextLang.label}
           </button>
           <button onClick={() => setTheme(toggleTheme())} className="grid size-9 place-items-center rounded-lg text-cream/80 hover:bg-cream/10" aria-label={t('theme.toggle')}>
@@ -112,6 +118,7 @@ function Shell({ items, children }) {
 
   return (
     <div className="min-h-dvh bg-bg lg:pl-60">
+      {account && <Suspense fallback={null}><MyAccount onClose={() => setAccount(false)} /></Suspense>}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 lg:block">{sidebar}</aside>
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">

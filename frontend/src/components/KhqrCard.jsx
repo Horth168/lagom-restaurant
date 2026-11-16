@@ -4,8 +4,10 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { KhqrLogo } from './KhqrLogo'
+import { useI18n } from '../i18n'
 
 export function KhqrCard({ qrString, amountMinor, currency, merchant = 'LAGOM', onQr, size = 300 }) {
+  const { t } = useI18n()
   const [qrSrc, setQrSrc] = useState('')
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export function KhqrCard({ qrString, amountMinor, currency, merchant = 'LAGOM', 
       </div>
       <div className="mx-7 my-4 border-t-2 border-dashed border-[#d9d9d9]" aria-hidden="true" />
       <div className="relative px-7 pb-7">
-        {qrSrc ? <img src={qrSrc} alt="KHQR payment code" className="aspect-square w-full" /> : <div className="skeleton aspect-square w-full rounded" />}
+        {qrSrc ? <img src={qrSrc} alt={t('pay.qrAlt')} className="aspect-square w-full" /> : <div className="skeleton aspect-square w-full rounded" />}
         {qrSrc && (
           <span className="absolute top-1/2 left-1/2 grid size-11 -translate-x-1/2 -translate-y-[calc(50%+14px)] place-items-center rounded-full border-[3px] border-white bg-black text-[19px] font-bold text-white">
             {isKhr ? '៛' : '$'}

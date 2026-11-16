@@ -9,7 +9,7 @@ import { ProductImage } from '../../components/ProductImage'
 import { Receipt, printSoon } from '../../components/Receipt'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Button, Field, inputBase, inputCls, parseUsd, STATUS_TONE, ToastProvider, useToast } from '../../components/ui'
-import { useI18n } from '../../i18n'
+import { appLocale, useI18n } from '../../i18n'
 import { api } from '../../lib/api'
 import { addLine, defaultSelection, itemCount, missingGroups, previewUnitPrice, selectedOptionIds, setQuantity, toggleOption } from '../../lib/cartMath'
 import { formatKHR, formatUSD } from '../../lib/money'
@@ -155,7 +155,7 @@ function Pos() {
             <input className={`${inputCls} pl-9`} placeholder={t('menu.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
           <Button variant="ghost" onClick={() => setHistoryOpen(true)} title={t('pos.history')}><History size={18} /></Button>
-          {can('dashboard.view') && <Link to="/admin" className="grid size-10 place-items-center rounded-lg hover:bg-surface-2" title="Admin"><LayoutDashboard size={18} /></Link>}
+          {can('dashboard.view') && <Link to="/admin" className="grid size-10 place-items-center rounded-lg hover:bg-surface-2" title={t('admin.title')}><LayoutDashboard size={18} /></Link>}
           <Button variant="ghost" onClick={logout} title={`${t('kds.signOut')} (${user?.full_name})`}><LogOut size={18} /></Button>
         </header>
         <nav className="no-scrollbar flex gap-2 overflow-x-auto border-b border-line px-4 py-2">
@@ -345,7 +345,7 @@ function PosHistory({ open, onClose }) {
               <li key={o.public_id}>
                 <button onClick={() => setDetail(o.public_id)} className="flex w-full items-center gap-3 py-3 text-left text-sm hover:bg-surface-2">
                   <span className="w-12 font-semibold tabular-nums">#{o.number}</span>
-                  <span className="flex-1">{o.table || t(`channel.${o.channel}`)}<span className="block text-xs text-muted">{new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {o.payment_method ? t(`pay.${o.payment_method}`) : '—'}</span></span>
+                  <span className="flex-1">{o.table || t(`channel.${o.channel}`)}<span className="block text-xs text-muted">{new Date(o.created_at).toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' })} · {o.payment_method ? t(`pay.${o.payment_method}`) : '—'}</span></span>
                   <Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}`)}</Badge>
                   <span className="w-16 text-right font-semibold tabular-nums">{formatUSD(o.total_usd_cents)}</span>
                 </button>

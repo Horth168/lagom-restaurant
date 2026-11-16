@@ -36,3 +36,4 @@ POS and the admin dashboard.
 - [Payments setup: ABA KHQR + cash](docs/PAYMENTS_SETUP.md)
 - [Kitchen display (KDS)](docs/KITCHEN_DISPLAY.md)
 - [Inventory and finance](docs/INVENTORY_AND_FINANCE.md)
+- [Staff, permissions and languages](docs/STAFF_AND_LANGUAGES.md)

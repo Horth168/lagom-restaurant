@@ -12,6 +12,12 @@ export const LANGUAGES = [
   { code: 'zh', label: '中文' },
 ]
 const DICTS = { en, km, zh }
+const LOCALES = { en: 'en-GB', km: 'km-KH', zh: 'zh-CN' }
+
+/** Date/time format of the language the app is showing (dates follow the app, not the browser). */
+export function appLocale() {
+  return LOCALES[typeof document !== 'undefined' ? document.documentElement.lang : 'en'] || 'en-GB'
+}
 const STORAGE_KEY = 'lagom.lang'
 
 function initialLang() {
