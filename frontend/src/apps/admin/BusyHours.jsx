@@ -1,5 +1,6 @@
 /* When are we busy? Paid orders by weekday × hour (restaurant time), last 4 weeks.
  * One hue, light → dark (more orders = darker). Hover or tap a square for the numbers. */
+import { Segmented } from '../../components/Segmented'
 import { useEffect, useMemo, useState } from 'react'
 import { Card } from '../../components/ui'
 import { useI18n } from '../../i18n'
@@ -35,12 +36,8 @@ export function BusyHours() {
   return (
     <Card title={t('busy.title')} className="lg:col-span-3"
       action={
-        <div className="flex gap-1">
-          {[28, 90].map((d) => (
-            <button key={d} onClick={() => setDays(d)} aria-pressed={days === d}
-              className={`h-8 rounded-full px-3 text-xs ${days === d ? 'bg-brand text-on-brand' : 'border border-line'}`}>{t('reviews.days', { n: d })}</button>
-          ))}
-        </div>
+        <Segmented size="sm" label={t('admin.periodLabel')} value={days} onChange={setDays}
+          options={[28, 90].map((d) => ({ value: d, label: t('reviews.days', { n: d }) }))} />
       }>
       {!data ? <div className="skeleton h-48 rounded-lg" /> : data.orders === 0 ? (
         <p className="text-sm text-muted">{t('admin.noSales')}</p>

@@ -1,3 +1,4 @@
+import { Segmented } from '../../components/Segmented'
 import { BusyHours } from './BusyHours'
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
@@ -38,19 +39,8 @@ export default function Overview() {
   return (
     <>
       <PageTitle title={t('admin.nav.overview')}>
-        <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1" role="tablist">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              role="tab"
-              aria-selected={period === p}
-              onClick={() => setPeriod(p)}
-              className={`rounded-md px-3 py-1.5 text-sm ${period === p ? 'bg-brand text-on-brand' : 'text-ink hover:bg-surface-2'}`}
-            >
-              {t(`admin.period.${p}`)}
-            </button>
-          ))}
-        </div>
+        <Segmented label={t('admin.periodLabel')} value={period} onChange={setPeriod}
+          options={PERIODS.map((p) => ({ value: p, label: t(`admin.period.${p}`) }))} />
         {period === 'custom' && (
           <div className="flex items-center gap-2">
             <input type="date" className={`${inputBase} w-40`} value={range.start} onChange={(e) => setRange((r) => ({ ...r, start: e.target.value }))} aria-label={t('admin.from')} />

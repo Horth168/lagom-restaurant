@@ -1,4 +1,5 @@
 /* Customer ratings: overall average, average per dish, latest comments. */
+import { Segmented } from '../../components/Segmented'
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { Card, Skeleton } from '../../components/ui'
@@ -31,12 +32,8 @@ export default function Reviews() {
   return (
     <>
       <PageTitle title={t('admin.nav.reviews')}>
-        {PERIODS.map((d) => (
-          <button key={d} onClick={() => setDays(d)} aria-pressed={days === d}
-            className={`h-9 rounded-full px-3 text-sm ${days === d ? 'bg-brand text-on-brand' : 'border border-line'}`}>
-            {t('reviews.days', { n: d })}
-          </button>
-        ))}
+        <Segmented label={t('admin.periodLabel')} value={days} onChange={setDays}
+          options={PERIODS.map((d) => ({ value: d, label: t('reviews.days', { n: d }) }))} />
       </PageTitle>
       {!data ? <Skeleton className="h-64" /> : (
         <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">

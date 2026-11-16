@@ -1,3 +1,4 @@
+import { Segmented } from '../../components/Segmented'
 import { useCallback, useEffect, useState } from 'react'
 import { FileSpreadsheet, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Sheet } from '../../components/Sheet'
@@ -24,21 +25,12 @@ export default function Finance() {
   return (
     <>
       <PageTitle title={t('admin.nav.finance')}>
-        <div className="flex gap-1 rounded-lg border border-line bg-surface p-1" role="tablist">
-          {['report', 'expenses'].map((x) => (
-            <button key={x} role="tab" aria-selected={tab === x} onClick={() => setTab(x)}
-              className={`rounded-md px-3 py-1.5 text-sm ${tab === x ? 'bg-brand text-on-brand' : 'hover:bg-surface-2'}`}>{t(`fin.tab.${x}`)}</button>
-          ))}
-        </div>
+        <Segmented label={t('admin.nav.finance')} value={tab} onChange={setTab}
+          options={['report', 'expenses'].map((x) => ({ value: x, label: t(`fin.tab.${x}`) }))} />
       </PageTitle>
       <div className="mb-6 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">
-          {PERIODS.map((p) => (
-            <button key={p} onClick={() => setPeriod(p)} className={`rounded-md px-3 py-1.5 text-sm ${period === p ? 'bg-brand text-on-brand' : 'hover:bg-surface-2'}`}>
-              {t(`admin.period.${p}`)}
-            </button>
-          ))}
-        </div>
+        <Segmented label={t('admin.periodLabel')} value={period} onChange={setPeriod} className="min-w-0"
+          options={PERIODS.map((p) => ({ value: p, label: t(`admin.period.${p}`) }))} />
         {period === 'custom' && (
           <>
             <input type="date" className={`${inputBase} w-40`} value={range.start} onChange={(e) => setRange({ ...range, start: e.target.value })} aria-label={t('admin.from')} />

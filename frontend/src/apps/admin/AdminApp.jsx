@@ -184,7 +184,7 @@ export function PageTitle({ title, children }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="font-display text-3xl">{title}</h1>
-      <div className="flex flex-wrap items-center gap-2">{children}</div>
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{children}</div>
     </div>
   )
 }
