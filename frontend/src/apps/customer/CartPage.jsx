@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Clock, Plus, ShoppingBag, Trash2 } from 'lucide-react'
 import { ProductImage } from '../../components/ProductImage'
 import { useI18n } from '../../i18n'
@@ -10,8 +10,15 @@ import { Header } from './Header'
 import { Stepper } from './ProductSheet'
 
 export function CartPage() {
-  const { t, pick } = useI18n()
-  const { lines, setQty, productsById, categoriesById, settings } = useCustomer()
+  const { t, pick, lang } = useI18n()
+  const { lines, setQty, clear, productsById, categoriesById, settings, headers } = useCustomer()
+  const navigate = useNavigate()
+  const [note, setNote] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
+  // One key per version of the cart: tapping twice (or retrying after a network error) never makes two orders
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a new key whenever the cart changes is the point
+  const idempotencyKey = useMemo(() => newKey(), [lines])
   const [result, setResult] = useState({ quote: null, problem: null, forLines: null })
   // Only trust a server answer that belongs to the cart exactly as it is now
   const fresh = result.forLines === lines
@@ -50,6 +57,33 @@ export function CartPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setters capture `lines`, which is already a dependency
   }, [lines, t])
+
+  async function checkout() {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const order = await api('/api/public/orders', {
+        method: 'POST',
+        headers,
+        body: {
+          items: lines.map((l) => ({
+            product_id: l.product_id,
+            option_ids: l.option_ids,
+            quantity: l.quantity,
+            special_instructions: l.special_instructions,
+          })),
+          customer_note: note.trim(),
+          idempotency_key: idempotencyKey,
+          language: lang,
+        },
+      })
+      clear()
+      navigate(`../order/${order.public_id}`, { replace: true })
+    } catch (e) {
+      setSubmitError(e instanceof ApiError && e.status !== 0 ? e.message : t('entry.offline'))
+      setSubmitting(false)
+    }
+  }
 
   if (!lines.length) {
     return (
@@ -122,6 +156,18 @@ export function CartPage() {
           <Plus size={16} /> {t('cart.addMore')}
         </Link>
 
+        <label className="mt-2 block">
+          <span className="text-sm font-medium">{t('cart.note')}</span>
+          <textarea
+            value={note}
+            maxLength={500}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t('cart.notePlaceholder')}
+            rows={2}
+            className="mt-2 w-full resize-none rounded-xl border border-line bg-surface p-3 text-[16px] outline-none placeholder:text-muted focus:border-accent"
+          />
+        </label>
+
         <section className="mt-4 rounded-2xl border border-line bg-surface p-5" aria-live="polite">
           {problem && problem.line === null && <p className="mb-3 text-sm text-danger">{problem.message}</p>}
           <div className="flex items-baseline justify-between">
@@ -148,7 +194,23 @@ export function CartPage() {
           )}
           <p className="mt-3 text-xs text-muted">{t('cart.priceNote')}</p>
         </section>
+
+        {submitError && <p className="mt-4 text-sm text-danger" role="alert">{submitError}</p>}
+        <button
+          onClick={checkout}
+          disabled={!quote || submitting}
+          className="mt-5 h-14 w-full rounded-full bg-brand text-[16px] font-semibold text-on-brand disabled:opacity-40"
+        >
+          {submitting ? t('cart.creating') : t('cart.checkout')}
+        </button>
       </main>
     </div>
   )
+}
+
+function newKey() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID().replaceAll('-', '')
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }

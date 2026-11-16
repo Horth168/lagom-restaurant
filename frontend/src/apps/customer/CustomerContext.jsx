@@ -73,6 +73,10 @@ export function CustomerProvider({ qrToken, children }) {
   const clear = useCallback(() => setLines([]), [])
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
 
+  const token = session?.session_token
+  // Sent with every customer request: proves which table session (phone) is asking
+  const headers = useMemo(() => (token ? { 'X-Table-Session': token } : {}), [token])
+
   const value = useMemo(() => {
     const productsById = new Map((menu?.products ?? []).map((p) => [p.id, p]))
     const categoriesById = new Map((menu?.categories ?? []).map((c) => [c.id, c]))
@@ -80,8 +84,9 @@ export function CustomerProvider({ qrToken, children }) {
       qrToken, session, menu, settings, error, retry,
       productsById, categoriesById,
       lines, add, setQty, clear,
+      headers,
     }
-  }, [qrToken, session, menu, settings, error, retry, lines, add, setQty, clear])
+  }, [qrToken, session, menu, settings, error, retry, lines, add, setQty, clear, headers])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

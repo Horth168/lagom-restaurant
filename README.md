@@ -23,3 +23,4 @@ POS and the admin dashboard.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Run LAGOM on Windows](docs/WINDOWS_SETUP.md)
+- [ABA PayWay setup](docs/ABA_PAYWAY_SETUP.md)

@@ -4,6 +4,8 @@ import { useI18n } from '../../i18n'
 import { CustomerProvider, useCustomer } from './CustomerContext'
 import { MenuPage } from './MenuPage'
 import { CartPage } from './CartPage'
+import { OrderPage } from './OrderPage'
+import { OrdersPage } from './OrdersPage'
 
 export default function CustomerApp() {
   const { qrToken } = useParams()
@@ -37,6 +39,8 @@ function Gate() {
     <Routes>
       <Route index element={<MenuPage />} />
       <Route path="cart" element={<CartPage />} />
+      <Route path="orders" element={<OrdersPage />} />
+      <Route path="order/:publicId" element={<OrderPage />} />
     </Routes>
   )
 }

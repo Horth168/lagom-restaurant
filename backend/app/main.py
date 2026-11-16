@@ -3,18 +3,39 @@
 Run locally:  uvicorn app.main:app --reload
 API docs:     http://localhost:8000/docs
 """
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, public, settings, staff, tables
+from app.api import auth, orders_public, public, settings, staff, tables
 from app.config import get_settings
-from app.db import engine
+from app.db import SessionLocal, engine
 
 log = logging.getLogger("lagom")
+
+
+def _expire_once() -> int:
+    from app.services.payments import expire_due_orders
+    from app.services.payway import get_payway
+
+    with SessionLocal() as db:
+        return expire_due_orders(db, get_payway())
+
+
+async def _expiry_loop() -> None:
+    """Every minute: expire unpaid orders (after a last check with PayWay)."""
+    while True:
+        try:
+            n = await asyncio.to_thread(_expire_once)
+            if n:
+                log.info("Expired %s unpaid orders", n)
+        except Exception:
+            log.exception("Expiry job failed")
+        await asyncio.sleep(60)
 
 
 @asynccontextmanager
@@ -25,7 +46,14 @@ async def lifespan(app: FastAPI):
         if problems:
             # Refuse to start a misconfigured production server (e.g. sandbox payments)
             raise RuntimeError("Production configuration problems: " + "; ".join(problems))
+    if s.payway_simulator:
+        log.warning("PAYWAY SIMULATOR IS ON - development only, no real money is involved")
+    task = asyncio.create_task(_expiry_loop()) if s.environment != "test" else None
     yield
+    if task:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 def create_app() -> FastAPI:
@@ -60,7 +88,7 @@ def create_app() -> FastAPI:
             conn.execute(text("SELECT 1"))
         return {"status": "ok", "environment": s.environment}
 
-    for r in (auth.router, staff.router, settings.router, public.router, tables.router):
+    for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router):
         app.include_router(r)
     return app
 

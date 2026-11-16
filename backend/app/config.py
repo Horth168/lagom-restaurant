@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     aba_payway_api_key: str = ""
     # Sandbox: https://checkout-sandbox.payway.com.kh   Production: https://checkout.payway.com.kh
     aba_payway_base_url: str = "https://checkout-sandbox.payway.com.kh"
+    # RSA public key from ABA, only needed for refunds through the API (PEM text)
+    aba_payway_rsa_public_key: str = ""
+    # DEVELOPMENT ONLY: use the built-in PayWay simulator instead of the real sandbox.
+    # The server refuses to start with this switched on in production.
+    payway_simulator: bool = False
     # Minutes a customer has to pay before an unpaid order expires
     payment_lifetime_minutes: int = 15
 
@@ -62,7 +67,7 @@ class Settings(BaseSettings):
 
     @property
     def payway_enabled(self) -> bool:
-        return bool(self.aba_payway_merchant_id and self.aba_payway_api_key)
+        return bool(self.aba_payway_merchant_id and self.aba_payway_api_key) or self.payway_simulator
 
     @property
     def payway_is_sandbox(self) -> bool:
@@ -75,7 +80,9 @@ class Settings(BaseSettings):
             problems.append("SECRET_KEY must be a long random value")
         if self.database_url.startswith("sqlite"):
             problems.append("DATABASE_URL must point to PostgreSQL in production")
-        if not self.payway_enabled:
+        if self.payway_simulator:
+            problems.append("PAYWAY_SIMULATOR must be off in production")
+        if not (self.aba_payway_merchant_id and self.aba_payway_api_key):
             problems.append("ABA PayWay credentials are missing")
         elif self.payway_is_sandbox:
             problems.append("ABA_PAYWAY_BASE_URL still points to the sandbox")

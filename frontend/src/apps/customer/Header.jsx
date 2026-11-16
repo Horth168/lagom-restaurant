@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronLeft, Globe, MapPin, Moon, Sun } from 'lucide-react'
+import { Check, ChevronLeft, Globe, MapPin, Moon, Receipt, Sun } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
 import { Sheet } from '../../components/Sheet'
 import { LANGUAGES, useI18n } from '../../i18n'
@@ -29,6 +29,11 @@ export function Header({ title, backTo }) {
             <MapPin size={13} className="text-accent" />
             {session?.table.label}
           </span>
+          {!backTo && (
+            <Link to="orders" className="grid size-9 place-items-center rounded-full text-ink hover:bg-surface-2" aria-label={t('orders.title')}>
+              <Receipt size={19} strokeWidth={1.75} />
+            </Link>
+          )}
           <button
             onClick={() => setLangOpen(true)}
             className="grid size-9 place-items-center rounded-full text-ink hover:bg-surface-2"
