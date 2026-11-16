@@ -24,3 +24,4 @@ POS and the admin dashboard.
 - [Architecture](docs/ARCHITECTURE.md)
 - [Run LAGOM on Windows](docs/WINDOWS_SETUP.md)
 - [Payments setup: ABA KHQR + cash](docs/PAYMENTS_SETUP.md)
+- [Kitchen display (KDS)](docs/KITCHEN_DISPLAY.md)

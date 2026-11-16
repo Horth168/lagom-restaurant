@@ -2,20 +2,27 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { I18nProvider, useI18n } from './i18n'
 import { Mark, Wordmark } from './components/Logo'
+import { RequireStaff, StaffAuthProvider } from './lib/staffAuth'
 
 // Each section is loaded only when needed, so customers' phones download only the customer app
 const CustomerApp = lazy(() => import('./apps/customer/CustomerApp'))
+const LoginPage = lazy(() => import('./apps/staff/LoginPage'))
+const KdsApp = lazy(() => import('./apps/kds/KdsApp'))
 
 export default function App() {
   return (
     <I18nProvider>
       <BrowserRouter>
-        <Suspense fallback={<div className="min-h-dvh" />}>
-          <Routes>
-            <Route path="/t/:qrToken/*" element={<CustomerApp />} />
-            <Route path="*" element={<Welcome />} />
-          </Routes>
-        </Suspense>
+        <StaffAuthProvider>
+          <Suspense fallback={<div className="min-h-dvh" />}>
+            <Routes>
+              <Route path="/t/:qrToken/*" element={<CustomerApp />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/kds/*" element={<RequireStaff><KdsApp /></RequireStaff>} />
+              <Route path="*" element={<Welcome />} />
+            </Routes>
+          </Suspense>
+        </StaffAuthProvider>
       </BrowserRouter>
     </I18nProvider>
   )

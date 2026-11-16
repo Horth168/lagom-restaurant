@@ -6,16 +6,18 @@ import { KhqrLogo } from '../../components/KhqrLogo'
 import { useI18n } from '../../i18n'
 import { api, ApiError } from '../../lib/api'
 import { formatKHR, formatUSD } from '../../lib/money'
+import { useLiveChannel } from '../../lib/realtime'
 import { useCustomer } from './CustomerContext'
 import { Header } from './Header'
 
-const POLL_PAYING_MS = 3000
-const POLL_TRACKING_MS = 5000
+// Live updates arrive instantly over the WebSocket; these checks are only a safety net
+const POLL_PAYING_MS = 5000
+const POLL_TRACKING_MS = 15000
 
 export function OrderPage() {
   const { publicId } = useParams()
   const { t } = useI18n()
-  const { headers } = useCustomer()
+  const { headers, session } = useCustomer()
   const [order, setOrder] = useState(null)
   const [error, setError] = useState(null)
 
@@ -31,6 +33,11 @@ export function OrderPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Instant updates: payment confirmed, preparing, ready, served
+  useLiveChannel('/api/ws/customer', { session: session?.session_token }, (msg) => {
+    if (msg.type === 'reconnected' || msg.order === publicId) load()
+  }, !!session)
 
   // Keep checking: while paying (the server also double-checks with ABA) and while the kitchen works
   const active = order && !['SERVED', 'CANCELLED', 'EXPIRED'].includes(order.status)

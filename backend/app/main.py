@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, orders_public, payments_admin, public, settings, staff, tables
+from app.api import auth, kds, orders_public, payments_admin, public, settings, staff, tables
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -45,6 +45,9 @@ async def lifespan(app: FastAPI):
         if problems:
             # Refuse to start a misconfigured production server (e.g. sandbox payments)
             raise RuntimeError("Production configuration problems: " + "; ".join(problems))
+    from app.services.realtime import hub
+
+    hub.bind_loop(asyncio.get_running_loop())  # live updates are sent from this event loop
     if s.khqr_test_mode:
         log.warning("KHQR TEST MODE IS ON - development only, payments can be faked")
     task = None
@@ -93,7 +96,7 @@ def create_app() -> FastAPI:
         return {"status": "ok", "environment": s.environment}
 
     for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
-              payments_admin.router):
+              payments_admin.router, kds.router):
         app.include_router(r)
     return app
 
