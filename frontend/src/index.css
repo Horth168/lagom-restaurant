@@ -18,6 +18,9 @@
   --on-brand: #f3ebdd;
   --accent: #b97c43; /* gold, darkened for text contrast on light backgrounds */
   --danger: #a2402f;
+  --series-1: #1f8a5c; /* KHQR / main series */
+  --series-2: #d9762b; /* cash */
+  --grid: #ebe3d5;
   color-scheme: light;
 }
 
@@ -33,6 +36,9 @@
     --on-brand: #1a241e;
     --accent: #d6a06a;
     --danger: #e08a78;
+    --series-1: #2fa874;
+    --series-2: #d27a2e;
+    --grid: #2a352f;
     color-scheme: dark;
   }
 }
@@ -61,6 +67,9 @@
   --color-on-brand: var(--on-brand);
   --color-accent: var(--accent);
   --color-danger: var(--danger);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-grid: var(--grid);
   --color-forest: var(--forest);
   --color-cream: var(--cream);
   --color-gold: var(--gold);
@@ -116,4 +125,12 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet-up, .animate-fade-in, .skeleton { animation: none; }
+}
+
+/* 80 mm thermal receipt printing: only the receipt is printed */
+@media print {
+  @page { size: 80mm auto; margin: 0; }
+  body * { visibility: hidden !important; }
+  .print-receipt, .print-receipt * { visibility: visible !important; }
+  .print-receipt { position: absolute; left: 0; top: 0; width: 72mm; padding: 2mm 4mm; color: #000; background: #fff; }
 }

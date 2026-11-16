@@ -167,3 +167,33 @@ def expire_order(db: Session, order: Order) -> None:
         if p.status == PaymentStatus.PENDING:
             p.status = PaymentStatus.EXPIRED
             log_event(db, p, "EXPIRE", note="Order payment time ran out")
+
+
+def cancel_order(db: Session, order: Order, *, reason: str, user_id: int) -> list:
+    """Cancel an order. Paid money becomes a PENDING refund for staff to return (ABA Mobile or cash).
+
+    Returns the refunds created. Kitchen screens drop the order through the live update.
+    """
+    from app.models import Refund
+
+    if order.status in (OrderStatus.CANCELLED, OrderStatus.EXPIRED):
+        raise ValueError("This order is already closed.")
+    refunds = []
+    for p in order.payments:
+        if p.status == PaymentStatus.PENDING:
+            p.status = PaymentStatus.CANCELLED
+            log_event(db, p, "CANCEL", note=f"Order cancelled: {reason}")
+        elif p.status == PaymentStatus.APPROVED:
+            r = Refund(payment_id=p.id, amount_minor=p.amount_minor - p.refunded_minor, currency=p.currency,
+                       reason=reason[:255], status="PENDING", created_by_user_id=user_id)
+            db.add(r)
+            refunds.append(r)
+            log_event(db, p, "REFUND", {"amount_minor": r.amount_minor}, note="Refund to give back (order cancelled)")
+    for item in order.items:
+        item.status = ItemStatus.CANCELLED
+    order.status = OrderStatus.CANCELLED
+    order.cancelled_at = utcnow()
+    order.cancel_reason = reason[:255]
+    order.cancelled_by_user_id = user_id
+    order.expires_at = None
+    return refunds

@@ -8,6 +8,8 @@ import { RequireStaff, StaffAuthProvider } from './lib/staffAuth'
 const CustomerApp = lazy(() => import('./apps/customer/CustomerApp'))
 const LoginPage = lazy(() => import('./apps/staff/LoginPage'))
 const KdsApp = lazy(() => import('./apps/kds/KdsApp'))
+const AdminApp = lazy(() => import('./apps/admin/AdminApp'))
+const PosApp = lazy(() => import('./apps/pos/PosApp'))
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
               <Route path="/t/:qrToken/*" element={<CustomerApp />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/kds/*" element={<RequireStaff><KdsApp /></RequireStaff>} />
+              <Route path="/admin/*" element={<RequireStaff><AdminApp /></RequireStaff>} />
+              <Route path="/pos" element={<RequireStaff><PosApp /></RequireStaff>} />
               <Route path="*" element={<Welcome />} />
             </Routes>
           </Suspense>

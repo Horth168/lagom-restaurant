@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, kds, orders_public, payments_admin, public, settings, staff, tables
+from app.api import auth, kds, menu_admin, orders_admin, orders_public, payments_admin, pos, public, settings, staff, tables
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -96,8 +96,15 @@ def create_app() -> FastAPI:
         return {"status": "ok", "environment": s.environment}
 
     for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
-              payments_admin.router, kds.router):
+              payments_admin.router, kds.router, menu_admin.router, orders_admin.router, pos.router):
         app.include_router(r)
+    # Product photos saved on this server (when Cloudflare R2 is not configured)
+    from fastapi.staticfiles import StaticFiles
+
+    from app.services.storage import LOCAL_DIR
+
+    LOCAL_DIR.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=LOCAL_DIR), name="uploads")
     return app
 
 

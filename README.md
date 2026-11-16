@@ -19,6 +19,16 @@ POS and the admin dashboard.
 | `brand/` | LAGOM logo system and print templates |
 | `docs/` | Architecture, setup, deployment and integration guides |
 
+## Screens
+
+| Address | For | What it does |
+|---|---|---|
+| `/t/<table QR code>` | Customers | Menu, order, pay (KHQR or cash), live order tracking |
+| `/login` | Staff | Sign in |
+| `/admin` | Owner, admin | Overview, orders, payments, menu, tables & QR, settings |
+| `/pos` | Cashiers | Counter orders, discounts, cash or KHQR, 80 mm receipts |
+| `/kds` | Kitchen, drinks, dessert | Live kitchen display per station |
+
 ## Guides
 
 - [Architecture](docs/ARCHITECTURE.md)

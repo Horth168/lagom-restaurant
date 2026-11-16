@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   // Only go back to a page inside this app (never to an outside address)
-  const next = params.get('next')?.startsWith('/') && !params.get('next').startsWith('//') ? params.get('next') : '/kds'
+  const next = params.get('next')?.startsWith('/') && !params.get('next').startsWith('//') ? params.get('next') : '/admin'
 
   if (user) return <Navigate to={next} replace />
 
