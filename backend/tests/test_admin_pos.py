@@ -140,6 +140,26 @@ def test_photo_upload_is_cleaned(client, seeded, staff, tmp_path, monkeypatch):
     assert bad.status_code == 422
 
 
+def test_photo_kept_in_database_survives_without_disk(client, seeded, staff, tmp_path, monkeypatch):
+    """Render's free plan wipes the disk on restart, so photos can live in PostgreSQL."""
+    from app.config import get_settings
+    from app.services import storage
+    monkeypatch.setattr(storage, "LOCAL_DIR", tmp_path)
+    monkeypatch.setattr(get_settings(), "photo_storage", "database")
+    buf = io.BytesIO()
+    Image.new("RGB", (800, 600), "green").save(buf, "PNG")
+    pid = _pid(seeded, "Cola")
+    r = client.post(f"/api/admin/products/{pid}/photo", headers=staff[Role.ADMIN],
+                    files={"file": ("cola.png", buf.getvalue(), "image/png")})
+    url = r.json()["image_url"]
+    assert "/api/public/photos/" in url and not list(tmp_path.rglob("*.jpg"))  # nothing on disk
+    got = client.get(url.split("8000")[-1])
+    assert got.status_code == 200 and got.headers["content-type"] == "image/jpeg"
+    assert Image.open(io.BytesIO(got.content)).size == (800, 600)
+    assert "immutable" in got.headers["cache-control"]
+    assert client.get("/api/public/photos/" + "0" * 32 + ".jpg").status_code == 404
+
+
 # ------------------------------------------------------------------ orders admin
 def test_order_list_search_and_detail(client, seeded, staff):
     a = _pos_order(client, staff[Role.CASHIER], seeded).json()

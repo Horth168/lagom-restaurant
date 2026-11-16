@@ -248,7 +248,7 @@ async def upload_photo(product_id: int, request: Request, file: UploadFile = Fil
     try:
         from starlette.concurrency import run_in_threadpool
 
-        url = await run_in_threadpool(save_product_photo, data)
+        url = await run_in_threadpool(save_product_photo, data, db)
     except UploadProblem as e:
         raise HTTPException(422, str(e))
     p.image_url, p.image_credit, p.image_source_url = url, "", ""

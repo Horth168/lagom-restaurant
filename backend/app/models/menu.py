@@ -1,10 +1,12 @@
 from decimal import Decimal
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, Numeric
+from datetime import datetime
+
+from sqlalchemy import Boolean, ForeignKey, Integer, LargeBinary, String, Text, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin, str_enum
+from app.models.base import TimestampMixin, UTCDateTime, str_enum, utcnow
 from app.models.enums import OptionSelection, Station
 
 
@@ -118,3 +120,17 @@ class Promotion(TimestampMixin, Base):
     product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class StoredPhoto(Base):
+    """A menu photo kept inside the database (PHOTO_STORAGE=database).
+
+    Used on hosting without a permanent disk (Render's free plan wipes files on every
+    restart) when Cloudflare R2 is not set up. Photos are small JPEGs (max 1600 px).
+    """
+
+    __tablename__ = "stored_photos"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

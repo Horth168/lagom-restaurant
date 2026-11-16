@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     r2_secret_access_key: str = ""
     r2_bucket: str = ""
     r2_public_base_url: str = ""
+    # Without R2: "disk" saves photos in backend/uploads (fine on your computer),
+    # "database" keeps them in PostgreSQL (for hosting whose disk is wiped, e.g. Render free)
+    photo_storage: Literal["disk", "database"] = "disk"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

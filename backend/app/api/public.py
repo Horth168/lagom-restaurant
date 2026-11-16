@@ -148,6 +148,18 @@ def read_session(s: TableSession = Depends(current_table_session)):
     return _session_out(s)
 
 
+# ---------------------------------------------------------------- photos kept in the database
+@router.get("/photos/{photo_id}.jpg")
+def photo(photo_id: str, db: Session = Depends(get_db)):
+    from app.models import StoredPhoto
+
+    p = db.get(StoredPhoto, photo_id) if len(photo_id) == 32 else None
+    if not p:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
+    # Each photo has a new random name, so phones can keep it for a year
+    return Response(p.data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
 # ---------------------------------------------------------------- cart quote
 @router.post("/cart/quote", dependencies=[Depends(rate_limit("cart-quote", 120))])
 def quote(cart: CartIn, db: Session = Depends(get_db)):

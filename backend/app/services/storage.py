@@ -39,7 +39,7 @@ def _clean_jpeg(data: bytes) -> bytes:
     return out.getvalue()
 
 
-def save_product_photo(data: bytes) -> str:
+def save_product_photo(data: bytes, db=None) -> str:
     """Returns the public URL of the stored photo."""
     jpeg = _clean_jpeg(data)
     name = f"products/{secrets.token_hex(12)}.jpg"
@@ -57,6 +57,13 @@ def save_product_photo(data: bytes) -> str:
         client.put_object(Bucket=s.r2_bucket, Key=name, Body=jpeg, ContentType="image/jpeg",
                           CacheControl="public, max-age=31536000, immutable")
         return f"{s.r2_public_base_url.rstrip('/')}/{name}"
+    if s.photo_storage == "database" and db is not None:
+        from app.models import StoredPhoto
+
+        photo_id = secrets.token_hex(16)
+        db.add(StoredPhoto(id=photo_id, data=jpeg))
+        db.flush()  # saved together with the product change
+        return f"{s.backend_url.rstrip('/')}/api/public/photos/{photo_id}.jpg"
     path = LOCAL_DIR / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(jpeg)
