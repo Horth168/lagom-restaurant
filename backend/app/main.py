@@ -19,6 +19,13 @@ from app.config import get_settings
 from app.db import SessionLocal, engine
 
 log = logging.getLogger("lagom")
+# LAGOM's own messages (payment listener connected, orders expired, …) appear in the server logs
+if not log.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_h)
+    log.setLevel(logging.INFO)
+    log.propagate = False
 
 
 def _expire_once() -> int:
@@ -56,9 +63,9 @@ async def lifespan(app: FastAPI):
     hub.bind_loop(asyncio.get_running_loop())  # live updates are sent from this event loop
     if s.khqr_test_mode:
         log.warning("KHQR TEST MODE IS ON - development only, payments can be faked")
-    if s.is_production and not (s.r2_bucket and s.r2_access_key_id):
-        log.warning("Cloudflare R2 is not set up: uploaded menu photos are saved on this server's disk "
-                    "and are LOST on every redeploy. See docs/DEPLOYMENT.md step 4.")
+    if s.is_production and not (s.r2_bucket and s.r2_access_key_id) and s.photo_storage == "disk":
+        log.warning("Uploaded menu photos are saved on this server's disk and are LOST on every redeploy. "
+                    "Set PHOTO_STORAGE=database or set up Cloudflare R2 (docs/DEPLOYMENT.md).")
     task = None
     if s.environment != "test":
         task = asyncio.create_task(_expiry_loop())
