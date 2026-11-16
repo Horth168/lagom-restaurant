@@ -1,8 +1,8 @@
 // KHQR wordmark (Cambodia's national QR payment standard), redrawn as SVG so it stays sharp.
 // Shown on the payment card so customers recognise a standard KHQR they can pay with any bank app.
-export function KhqrLogo({ height = 20, color = '#E1232E', className = '', title = 'KHQR' }) {
+export function KhqrLogo({ height = 20, color = '#E1232E', className = '', title = 'KHQR', ...rest }) {
   return (
-    <svg viewBox="0 0 735 175" height={height} className={className} role="img" aria-label={title}>
+    <svg viewBox="0 0 735 175" height={height} className={className} role="img" aria-label={title} {...rest}>
       <g fill={color}>
         <rect x="0" y="0" width="35" height="175" />
         <polygon points="35,82 117,0 166,0 35,131" />
