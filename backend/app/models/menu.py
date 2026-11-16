@@ -36,6 +36,9 @@ class Product(TimestampMixin, Base):
     description_km: Mapped[str] = mapped_column(Text, default="")
     description_zh: Mapped[str] = mapped_column(Text, default="")
     image_url: Mapped[str] = mapped_column(String(500), default="")
+    # Photo credit when the licence requires it, e.g. "Photo: Jane Doe, CC BY-SA 4.0, Wikimedia Commons"
+    image_credit: Mapped[str] = mapped_column(String(300), default="")
+    image_source_url: Mapped[str] = mapped_column(String(500), default="")
     price_usd_cents: Mapped[int] = mapped_column(Integer)
     station: Mapped[Station | None] = mapped_column(str_enum(Station), nullable=True)
     prep_minutes: Mapped[int] = mapped_column(Integer, default=10)

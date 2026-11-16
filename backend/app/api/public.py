@@ -52,6 +52,8 @@ def menu(response: Response, db: Session = Depends(get_db)):
                 "name": _tr(p, "name"),
                 "description": _tr(p, "description"),
                 "image_url": p.image_url,
+                "image_credit": p.image_credit,
+                "image_source_url": p.image_source_url,
                 "price_usd_cents": p.price_usd_cents,
                 "prep_minutes": p.prep_minutes,
                 "is_available": p.is_available,

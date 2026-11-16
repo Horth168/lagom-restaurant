@@ -53,7 +53,17 @@ function ProductForm({ product, onDone }) {
         className="aspect-[16/10] w-full"
         iconSize={56}
       />
-      <div className="px-5 pt-5">
+      {product.image_credit && (
+        <a
+          href={product.image_source_url || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block truncate px-5 pt-1.5 text-[10px] text-muted"
+        >
+          {product.image_credit}
+        </a>
+      )}
+      <div className="px-5 pt-4">
         <h2 className="font-display text-[28px] leading-tight">{pick(product.name)}</h2>
         {pick(product.description) && <p className="mt-2 text-[15px] text-muted">{pick(product.description)}</p>}
         <div className="mt-3 flex items-center gap-3 text-sm text-muted">

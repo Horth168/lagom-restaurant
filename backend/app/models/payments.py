@@ -34,6 +34,9 @@ class Payment(TimestampMixin, Base):
     received_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     failure_reason: Mapped[str] = mapped_column(String(255), default="")
+    # What the customer scans / taps (not secret). Stored so a page reload shows the same QR.
+    qr_string: Mapped[str] = mapped_column(Text, default="")
+    deeplink: Mapped[str] = mapped_column(String(1000), default="")
 
     order: Mapped["Order"] = relationship(back_populates="payments")  # noqa: F821
     events: Mapped[list["PaymentEvent"]] = relationship(back_populates="payment", order_by="PaymentEvent.id")

@@ -4,14 +4,17 @@
 
 Refuses to run when ENVIRONMENT=production. Safe to run twice (skips if a menu exists).
 Khmer and Chinese names are a starting point – have a native speaker review them.
-Product photos are left empty on purpose: upload real LAGOM photography in the admin.
+Demo photos come from Wikimedia Commons (free licences, credits in scripts/menu_photos.json).
+They show the dish, not LAGOM's own plating: replace them with LAGOM photography before opening.
 
 Demo staff accounts all use the password in DEMO_STAFF_PASSWORD (default below, development only):
     owner@lagom.test, admin@lagom.test, cashier@lagom.test,
     kitchen@lagom.test, drinks@lagom.test, inventory@lagom.test
 """
+import json
 import os
 import sys
+from pathlib import Path
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -25,6 +28,7 @@ from app.models import (
 from app.models.enums import OptionSelection, Role, Station
 
 DEMO_PASSWORD = os.environ.get("DEMO_STAFF_PASSWORD", "Lagom-demo-2026")
+PHOTOS = json.loads((Path(__file__).with_name("menu_photos.json")).read_text(encoding="utf-8"))
 
 # slug, en, km, zh, station
 CATEGORIES = [
@@ -185,7 +189,10 @@ def seed(db, with_staff: bool = True) -> dict:
     for i, (cat, en, km, zh, price, prep, flags, desc, optset) in enumerate(PRODUCTS):
         p = Product(category=cats[cat], name_en=en, name_km=km, name_zh=zh, description_en=desc,
                     price_usd_cents=cents(price), prep_minutes=prep, sort_order=i,
-                    is_featured="F" in flags, is_best_seller="B" in flags)
+                    is_featured="F" in flags, is_best_seller="B" in flags,
+                    image_url=PHOTOS.get(en, {}).get("image_url", ""),
+                    image_credit=PHOTOS.get(en, {}).get("image_credit", ""),
+                    image_source_url=PHOTOS.get(en, {}).get("image_source_url", ""))
         for gi, grp in enumerate(OPTION_SETS[optset]):
             og = OptionGroup(name_en=grp["name"][0], name_km=grp["name"][1], name_zh=grp["name"][2],
                              selection=grp["sel"], is_required=grp["required"], min_select=grp["min_select"],
