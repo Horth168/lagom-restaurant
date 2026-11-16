@@ -8,6 +8,7 @@
 | Server | Render free web service `lagom-api` (workspace **LAGOM**, Singapore) | https://lagom-api.onrender.com |
 | Database | Supabase project `lagom` (Singapore), schema `lagom`, login `lagom_app` | Supabase session pooler |
 | Menu photos | Inside the database (`PHOTO_STORAGE=database`) | `/api/public/photos/…` |
+| Visitor IP | `TRUSTED_PROXY_HOPS=3` (visitor → Cloudflare → Render proxy → LAGOM), checked in the audit log | |
 | Keep-awake | Supabase pg_cron job `lagom-keep-awake` (every 5 min) + GitHub Action `Keep API awake` (every 10 min) | pings `/api/health` |
 
 Why it stays up for free: LAGOM has **its own Render workspace**, so its 750 free server-hours a

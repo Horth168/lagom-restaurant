@@ -23,8 +23,8 @@ services:
         value: "3.13.5"
       - key: ENVIRONMENT
         value: production
-      - key: TRUSTED_PROXY_HOPS
-        value: "1"
+      - key: TRUSTED_PROXY_HOPS # visitor -> Cloudflare -> Render proxy -> LAGOM (checked 16 Nov 2026)
+        value: "3"
       - key: PHOTO_STORAGE # free plan has no permanent disk: keep photos in the database
         value: database
       - key: BACKEND_URL
