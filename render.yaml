@@ -1,20 +1,21 @@
-# Render Blueprint for the LAGOM backend (API, live updates, payment listener).
-# In Render: New + → Blueprint → choose this repository. See docs/DEPLOYMENT.md.
+# Render Blueprint for LAGOM (what is live, in its own Render workspace "LAGOM").
+# Live: server https://lagom-api.onrender.com · website https://lagom-web.onrender.com
+# Database: Supabase PostgreSQL (Singapore, schema "lagom"). See docs/DEPLOYMENT.md.
 #
-# Keep exactly ONE instance: login limits, live updates and the ABA payment listener
-# run inside this one server. The "starter" plan never sleeps; the free plan sleeps
-# after 15 minutes without visitors, and while asleep KHQR payments are NOT confirmed.
+# Free plan, kept awake 24/7 by pings (Supabase pg_cron every 5 min + GitHub Action every
+# 10 min). The LAGOM workspace has its own 750 free hours/month, enough for one server 24/7.
+# Keep exactly ONE server instance: login limits, live updates and the ABA payment
+# listener run inside it. For guaranteed uptime later, change plan to "starter".
 services:
   - type: web
     name: lagom-api
     runtime: python
-    plan: starter
-    region: singapore # closest Render region to Cambodia
-    rootDir: backend
+    plan: free
+    region: singapore
     branch: main
-    buildCommand: pip install -r requirements.txt
+    buildCommand: cd backend && pip install -r requirements.txt
     # Update the database tables first, then start the server
-    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
@@ -24,16 +25,18 @@ services:
         value: production
       - key: TRUSTED_PROXY_HOPS
         value: "1"
+      - key: PHOTO_STORAGE # free plan has no permanent disk: keep photos in the database
+        value: database
+      - key: BACKEND_URL
+        value: https://lagom-api.onrender.com
+      - key: FRONTEND_URL
+        value: https://lagom-web.onrender.com
+      - key: CORS_ORIGINS
+        value: https://lagom-web.onrender.com
+      # Secrets: typed in Render's dashboard only (never stored in Git)
       - key: SECRET_KEY
         generateValue: true
-      # Values below are typed in Render's dashboard (never stored in Git)
-      - key: DATABASE_URL # Neon PostgreSQL connection string
-        sync: false
-      - key: FRONTEND_URL # e.g. https://order.lagom.example
-        sync: false
-      - key: BACKEND_URL # e.g. https://api.lagom.example
-        sync: false
-      - key: CORS_ORIGINS # same as FRONTEND_URL
+      - key: DATABASE_URL # Supabase session pooler, user lagom_app
         sync: false
       - key: KHQR_TEMPLATE
         sync: false
@@ -49,13 +52,32 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
-      - key: R2_ACCOUNT_ID
-        sync: false
-      - key: R2_ACCESS_KEY_ID
-        sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
-      - key: R2_BUCKET
-        sync: false
-      - key: R2_PUBLIC_BASE_URL
-        sync: false
+
+  - type: web
+    name: lagom-web
+    runtime: static
+    branch: main
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://lagom-api.onrender.com
+      - key: NODE_VERSION
+        value: "22"
+    routes:
+      - type: rewrite # every page address opens the app (e.g. /t/<table>, /admin)
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=()

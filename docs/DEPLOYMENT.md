@@ -1,5 +1,28 @@
 # Put LAGOM online
 
+## What is live now (free, 24/7)
+
+| Part | Where | Address |
+|---|---|---|
+| Website | Render static site `lagom-web` (workspace **LAGOM**) | https://lagom-web.onrender.com |
+| Server | Render free web service `lagom-api` (workspace **LAGOM**, Singapore) | https://lagom-api.onrender.com |
+| Database | Supabase project `lagom` (Singapore), schema `lagom`, login `lagom_app` | Supabase session pooler |
+| Menu photos | Inside the database (`PHOTO_STORAGE=database`) | `/api/public/photos/…` |
+| Keep-awake | Supabase pg_cron job `lagom-keep-awake` (every 5 min) + GitHub Action `Keep API awake` (every 10 min) | pings `/api/health` |
+
+Why it stays up for free: LAGOM has **its own Render workspace**, so its 750 free server-hours a
+month are not shared with IceQ Sole or other projects, and the pings stop the free server from
+sleeping. Supabase's free database has no monthly compute-hour limit. Render may still restart a
+free server now and then (it is back within about a minute). For guaranteed uptime later,
+switch `lagom-api` to the Starter plan (about $7/month); nothing else changes.
+
+The LAGOM tables live in their own schema (`lagom`), which Supabase's public Data API does not
+expose. The `lagom_app` login is not a superuser and only owns that schema.
+
+The sections below describe the general setup (Cloudflare Pages / Neon / R2 alternatives).
+
+---
+
 LAGOM runs on four services. Each has a free tier except Render, where the small paid plan is
 needed so payments are confirmed at all hours.
 
