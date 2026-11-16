@@ -15,15 +15,36 @@ const H = 440
 const QR = { x: 30, y: 170, size: 240 }
 const FONT = 'Inter, "Noto Sans Khmer", Arial, sans-serif'
 
-/** 8-point star outline of the KHQR emblem, centred on (cx, cy). */
-function starPoints(cx, cy, outer, inner) {
-  const pts = []
-  for (let i = 0; i < 16; i++) {
-    const r = i % 2 ? inner : outer
-    const a = (Math.PI / 8) * i - Math.PI / 2
-    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`)
-  }
-  return pts.join(' ')
+const EMBLEM_RED = '#E21F26'
+
+/**
+ * The KHQR emblem in the middle of the QR: red circle, a white 8-point star band
+ * (a square and a diamond, open on the right) and the rounded "C" inside it.
+ * Drawn on a 1928×1928 grid, then scaled to radius r around (cx, cy).
+ */
+function KhqrEmblem({ cx, cy, r }) {
+  const k = (2 * r) / 1928
+  return (
+    <g transform={`translate(${cx - r} ${cy - r}) scale(${k})`}>
+      <circle cx="964" cy="964" r="964" fill={EMBLEM_RED} />
+      {/* Star band: outer outline minus inner outline */}
+      <path
+        fillRule="evenodd"
+        fill="#ffffff"
+        d="M964 40 L705 310 H340 V690 L80 964 L340 1240 V1615 H705 L964 1890 L1225 1615 H1590 V1240 L1850 964 L1590 690 V310 H1225 Z
+           M964 200 L745 420 H445 V740 L228 964 L445 1190 V1510 H745 L964 1735 L1185 1510 H1485 V1200 L1700 964 L1485 740 V420 H1185 Z"
+      />
+      {/* Rounded "C": outer shape minus inner shape */}
+      <path
+        fillRule="evenodd"
+        fill="#ffffff"
+        d="M630 615 H800 Q964 545 1140 615 H1300 V1315 H1140 Q964 1385 800 1315 H630 V1130 Q560 964 630 800 Z
+           M735 725 H830 Q964 655 1100 725 H1195 V1205 H1100 Q964 1275 830 1205 H735 V1130 Q665 964 735 800 Z"
+      />
+      {/* The opening on the right, through the C and the star's right point */}
+      <rect x="1190" y="895" width="690" height="145" fill={EMBLEM_RED} />
+    </g>
+  )
 }
 
 /** Turns the on-screen card into a PNG (2× sharper) for saving to the phone's photos. */
@@ -87,11 +108,8 @@ export function KhqrCard({ qrString, amountMinor, currency, merchant = 'LAGOM', 
         {qrSrc ? (
           <>
             <image href={qrSrc} x={QR.x} y={QR.y} width={QR.size} height={QR.size} />
-            {/* KHQR emblem: red circle, white ring, 8-point star and the "C" mark */}
-            <circle cx={cx} cy={cy} r="21" fill={RED} stroke="#ffffff" strokeWidth="4" />
-            <polygon points={starPoints(cx, cy, 14, 10.5)} fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinejoin="round" />
-            <path d={`M${cx + 4.5} ${cy - 5.5} H${cx - 3} A2.5 2.5 0 0 0 ${cx - 5.5} ${cy - 3} V${cy + 3} A2.5 2.5 0 0 0 ${cx - 3} ${cy + 5.5} H${cx + 4.5}`}
-              fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" />
+            <circle cx={cx} cy={cy} r="23" fill="#ffffff" />
+            <KhqrEmblem cx={cx} cy={cy} r={21} />
           </>
         ) : (
           <rect x={QR.x} y={QR.y} width={QR.size} height={QR.size} rx="6" fill="#eeeeee" />
