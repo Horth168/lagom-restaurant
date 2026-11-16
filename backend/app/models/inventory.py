@@ -55,6 +55,8 @@ class RecipeItem(Base):
     # If set, this line only applies when the option is chosen (e.g. Extra espresso → +9 g beans)
     option_id: Mapped[int | None] = mapped_column(ForeignKey("options.id", ondelete="CASCADE"), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(QTY)
+    # Bigger sizes use more milk/coffee (True), but still one cup and one straw (False)
+    scales_with_size: Mapped[bool] = mapped_column(Boolean, default=True)
 
     product: Mapped["Product"] = relationship(back_populates="recipe")  # noqa: F821
     ingredient: Mapped[Ingredient] = relationship()

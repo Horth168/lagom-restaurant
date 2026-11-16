@@ -215,7 +215,8 @@ def seed(db, with_staff: bool = True) -> dict:
 
     for pname, lines in RECIPES.items():
         for iname, qty in lines:
-            db.add(RecipeItem(product_id=products[pname].id, ingredient_id=ingredients[iname].id, quantity=Decimal(qty)))
+            db.add(RecipeItem(product_id=products[pname].id, ingredient_id=ingredients[iname].id, quantity=Decimal(qty),
+                              scales_with_size=ingredients[iname].unit != "pcs"))  # a Large still uses one cup
     for (pname, oname), lines in OPTION_RECIPES.items():
         opt = next(o for gr in products[pname].option_groups for o in gr.options if o.name_en == oname)
         for iname, qty in lines:

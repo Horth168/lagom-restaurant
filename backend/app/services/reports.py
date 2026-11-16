@@ -16,7 +16,7 @@ from app.models.enums import OrderStatus, PaymentProvider, PaymentStatus
 from app.services import app_settings
 
 SOLD = (OrderStatus.PAID, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.SERVED)
-PRESETS = ("today", "yesterday", "7d", "30d", "month", "custom")
+PRESETS = ("today", "yesterday", "7d", "30d", "month", "last_month", "quarter", "year", "custom")
 
 
 def resolve_period(db: Session, preset: str, start: date | None = None, end: date | None = None) -> tuple[date, date]:
@@ -33,6 +33,13 @@ def resolve_period(db: Session, preset: str, start: date | None = None, end: dat
         return today - timedelta(days=29), today
     if preset == "month":
         return today.replace(day=1), today
+    if preset == "last_month":
+        last = today.replace(day=1) - timedelta(days=1)
+        return last.replace(day=1), last
+    if preset == "quarter":
+        return date(today.year, 3 * ((today.month - 1) // 3) + 1, 1), today
+    if preset == "year":
+        return date(today.year, 1, 1), today
     if preset == "custom" and start and end:
         if end < start:
             start, end = end, start

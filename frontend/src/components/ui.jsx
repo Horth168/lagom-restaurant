@@ -61,8 +61,10 @@ export function Field({ label, hint, children }) {
   )
 }
 
-export const inputCls =
-  'h-10 w-full rounded-lg border border-line bg-bg px-3 text-[15px] outline-none focus:border-accent disabled:opacity-60'
+/** Input style without a width (combine with w-24, w-40…) */
+export const inputBase =
+  'h-10 rounded-lg border border-line bg-bg px-3 text-[15px] outline-none focus:border-accent disabled:opacity-60'
+export const inputCls = `${inputBase} w-full`
 
 export function Skeleton({ className = '' }) {
   return <div className={`skeleton rounded-lg ${className}`} />

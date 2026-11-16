@@ -189,6 +189,9 @@ def cancel_order(db: Session, order: Order, *, reason: str, user_id: int) -> lis
             db.add(r)
             refunds.append(r)
             log_event(db, p, "REFUND", {"amount_minor": r.amount_minor}, note="Refund to give back (order cancelled)")
+    from app.services.inventory import reverse_for_order
+
+    reverse_for_order(db, order)  # ingredients go back to stock if they had been taken out
     for item in order.items:
         item.status = ItemStatus.CANCELLED
     order.status = OrderStatus.CANCELLED

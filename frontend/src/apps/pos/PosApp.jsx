@@ -8,7 +8,7 @@ import { Mark } from '../../components/Logo'
 import { ProductImage } from '../../components/ProductImage'
 import { Receipt, printSoon } from '../../components/Receipt'
 import { Sheet } from '../../components/Sheet'
-import { Badge, Button, Field, inputCls, parseUsd, STATUS_TONE, ToastProvider, useToast } from '../../components/ui'
+import { Badge, Button, Field, inputBase, inputCls, parseUsd, STATUS_TONE, ToastProvider, useToast } from '../../components/ui'
 import { useI18n } from '../../i18n'
 import { api } from '../../lib/api'
 import { addLine, defaultSelection, itemCount, missingGroups, previewUnitPrice, selectedOptionIds, setQuantity, toggleOption } from '../../lib/cartMath'
@@ -222,7 +222,7 @@ function Pos() {
             discount ? (
               <div className="space-y-2 rounded-lg bg-surface-2 p-3">
                 <div className="flex gap-2">
-                  <select aria-label={t('pos.discount')} className={`${inputCls} w-24`} value={discount.type} onChange={(e) => setDiscount({ ...discount, type: e.target.value })}>
+                  <select aria-label={t('pos.discount')} className={`${inputBase} w-24`} value={discount.type} onChange={(e) => setDiscount({ ...discount, type: e.target.value })}>
                     <option value="percent">%</option>
                     <option value="amount">$</option>
                   </select>

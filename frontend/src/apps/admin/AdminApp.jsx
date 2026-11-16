@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import {
-  ChefHat, Globe, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, QrCode, Receipt, Settings, ShoppingBag,
+  Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, QrCode, Receipt, Settings, ShoppingBag,
   Sun, UtensilsCrossed, Wallet, X,
 } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
@@ -16,12 +16,16 @@ const Payments = lazy(() => import('./Payments'))
 const MenuAdmin = lazy(() => import('./MenuAdmin'))
 const Tables = lazy(() => import('./Tables'))
 const SettingsPage = lazy(() => import('./SettingsPage'))
+const Inventory = lazy(() => import('./Inventory'))
+const Finance = lazy(() => import('./Finance'))
 
 const NAV = [
   { to: 'overview', label: 'admin.nav.overview', icon: LayoutDashboard, perm: 'dashboard.view', el: <Overview /> },
   { to: 'orders', label: 'admin.nav.orders', icon: Receipt, perm: 'orders.view', el: <Orders /> },
   { to: 'payments', label: 'admin.nav.payments', icon: Wallet, perm: 'payments.view', el: <Payments /> },
   { to: 'menu', label: 'admin.nav.menu', icon: UtensilsCrossed, perm: 'menu.view', el: <MenuAdmin /> },
+  { to: 'inventory', label: 'admin.nav.inventory', icon: Boxes, perm: 'inventory.view', el: <Inventory /> },
+  { to: 'finance', label: 'admin.nav.finance', icon: Landmark, perm: 'finance.view', el: <Finance /> },
   { to: 'tables', label: 'admin.nav.tables', icon: QrCode, perm: 'tables.manage', el: <Tables /> },
   { to: 'settings', label: 'admin.nav.settings', icon: Settings, perm: 'settings.edit', el: <SettingsPage /> },
 ]

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { Card, inputCls, Skeleton } from '../../components/ui'
+import { Card, inputBase, Skeleton } from '../../components/ui'
 import { useI18n } from '../../i18n'
 import { formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
@@ -52,9 +52,9 @@ export default function Overview() {
         </div>
         {period === 'custom' && (
           <div className="flex items-center gap-2">
-            <input type="date" className={`${inputCls} w-40`} value={range.start} onChange={(e) => setRange((r) => ({ ...r, start: e.target.value }))} aria-label={t('admin.from')} />
+            <input type="date" className={`${inputBase} w-40`} value={range.start} onChange={(e) => setRange((r) => ({ ...r, start: e.target.value }))} aria-label={t('admin.from')} />
             <span className="text-muted">–</span>
-            <input type="date" className={`${inputCls} w-40`} value={range.end} onChange={(e) => setRange((r) => ({ ...r, end: e.target.value }))} aria-label={t('admin.to')} />
+            <input type="date" className={`${inputBase} w-40`} value={range.end} onChange={(e) => setRange((r) => ({ ...r, end: e.target.value }))} aria-label={t('admin.to')} />
           </div>
         )}
       </PageTitle>

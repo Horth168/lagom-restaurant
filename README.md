@@ -25,7 +25,7 @@ POS and the admin dashboard.
 |---|---|---|
 | `/t/<table QR code>` | Customers | Menu, order, pay (KHQR or cash), live order tracking |
 | `/login` | Staff | Sign in |
-| `/admin` | Owner, admin | Overview, orders, payments, menu, tables & QR, settings |
+| `/admin` | Owner, admin, inventory staff | Overview, orders, payments, menu, inventory, finance, tables & QR, settings |
 | `/pos` | Cashiers | Counter orders, discounts, cash or KHQR, 80 mm receipts |
 | `/kds` | Kitchen, drinks, dessert | Live kitchen display per station |
 
@@ -35,3 +35,4 @@ POS and the admin dashboard.
 - [Run LAGOM on Windows](docs/WINDOWS_SETUP.md)
 - [Payments setup: ABA KHQR + cash](docs/PAYMENTS_SETUP.md)
 - [Kitchen display (KDS)](docs/KITCHEN_DISPLAY.md)
+- [Inventory and finance](docs/INVENTORY_AND_FINANCE.md)

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { ProductImage } from '../../components/ProductImage'
 import { Sheet } from '../../components/Sheet'
-import { Badge, Button, Card, centsToInput, Field, inputCls, parseUsd, Skeleton, useToast } from '../../components/ui'
+import { Badge, Button, Card, centsToInput, Field, inputBase, inputCls, parseUsd, Skeleton, useToast } from '../../components/ui'
 import { useI18n } from '../../i18n'
 import { formatUSD } from '../../lib/money'
 import { useStaff } from '../../lib/staffAuth'
@@ -285,7 +285,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
                       <option value="MULTIPLE">{t('admin.menu.multiple')}</option>
                     </select>
                   </Field>
-                  {g.selection === 'MULTIPLE' && <Field label={t('admin.menu.max')}><input type="number" min="1" max="20" className={`${inputCls} w-20`} value={g.max_select} onChange={(e) => setGroup(gi, { max_select: e.target.value })} /></Field>}
+                  {g.selection === 'MULTIPLE' && <Field label={t('admin.menu.max')}><input type="number" min="1" max="20" className={`${inputBase} w-20`} value={g.max_select} onChange={(e) => setGroup(gi, { max_select: e.target.value })} /></Field>}
                   <label className="mb-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={g.is_required} onChange={(e) => setGroup(gi, { is_required: e.target.checked })} /> {t('product.required')}</label>
                   <button onClick={() => setF({ ...f, option_groups: f.option_groups.filter((_, i) => i !== gi) })} className="mb-2 ml-auto text-muted hover:text-danger" aria-label={t('admin.remove')}><Trash2 size={16} /></button>
                 </div>

@@ -11,7 +11,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, kds, menu_admin, orders_admin, orders_public, payments_admin, pos, public, settings, staff, tables
+from app.api import (auth, finance, inventory, kds, menu_admin, orders_admin, orders_public, payments_admin, pos,
+                     public, settings, staff, tables)
+from app.services import inventory as _inventory_hooks  # noqa: F401  (deducts stock when orders are paid)
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -96,7 +98,8 @@ def create_app() -> FastAPI:
         return {"status": "ok", "environment": s.environment}
 
     for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
-              payments_admin.router, kds.router, menu_admin.router, orders_admin.router, pos.router):
+              payments_admin.router, kds.router, menu_admin.router, orders_admin.router, pos.router,
+              inventory.router, finance.router):
         app.include_router(r)
     # Product photos saved on this server (when Cloudflare R2 is not configured)
     from fastapi.staticfiles import StaticFiles

@@ -61,6 +61,14 @@ def recompute(order: Order) -> None:
         order.accepted_at = now
 
 
+def _maybe_deduct(db: Session, order: Order) -> None:
+    """Owner chose 'take ingredients out of stock when the order is ready'."""
+    from app.services import app_settings, inventory
+
+    if order.status in (OrderStatus.READY, OrderStatus.SERVED) and             app_settings.get_setting(db, "inventory_deduct_on") == "READY":
+        inventory.deduct_for_order(db, order)
+
+
 def _set(item: OrderItem, status: ItemStatus) -> None:
     now = utcnow()
     if status == ItemStatus.PREPARING and item.started_at is None:
@@ -101,6 +109,7 @@ def station_action(db: Session, order: Order, station: Station, action: str) -> 
             if i.status == ItemStatus.READY:
                 _set(i, ItemStatus.PREPARING)
     recompute(order)
+    _maybe_deduct(db, order)
     notify_after_commit(db, order)
 
 
@@ -114,4 +123,5 @@ def item_action(db: Session, item: OrderItem, status: ItemStatus) -> None:
         raise KitchenProblem("Mark the item ready before serving.")
     _set(item, status)
     recompute(order)
+    _maybe_deduct(db, order)
     notify_after_commit(db, order)
