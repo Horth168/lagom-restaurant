@@ -53,7 +53,26 @@
   --on-brand: #1a241e;
   --accent: #d6a06a;
   --danger: #e08a78;
+  --series-1: #2fa874;
+  --series-2: #d27a2e;
+  --grid: #2a352f;
   color-scheme: dark;
+}
+
+/* ---- Light / dark switch ---------------------------------------------- */
+/* Circle reveal (lib/theme.js): the new theme grows from the button over the old one */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) { z-index: 2; }
+/* Browsers without view transitions: a soft colour fade instead */
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition: background-color 350ms ease, border-color 350ms ease, color 250ms ease, fill 250ms ease !important;
 }
 
 @theme inline {

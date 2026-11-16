@@ -1,6 +1,7 @@
+import { ThemeIcon } from '../../components/ThemeIcon'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronLeft, Globe, MapPin, Moon, Receipt, Sun } from 'lucide-react'
+import { Check, ChevronLeft, Globe, MapPin, Receipt } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
 import { Sheet } from '../../components/Sheet'
 import { LANGUAGES, useI18n } from '../../i18n'
@@ -44,11 +45,11 @@ export function Header({ title, backTo }) {
             <Globe size={19} strokeWidth={1.75} />
           </button>
           <button
-            onClick={() => setTheme(toggleTheme())}
-            className="grid size-9 place-items-center rounded-full text-ink hover:bg-surface-2"
+            onClick={(e) => setTheme(toggleTheme(e))}
+            className="grid size-9 place-items-center rounded-full text-ink transition hover:bg-surface-2 active:scale-90"
             aria-label={t('theme.toggle')}
           >
-            {theme === 'dark' ? <Sun size={19} strokeWidth={1.75} /> : <Moon size={19} strokeWidth={1.75} />}
+            <ThemeIcon theme={theme} size={19} />
           </button>
         </div>
       </div>

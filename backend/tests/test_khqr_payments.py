@@ -276,3 +276,23 @@ def test_test_mode_uses_the_real_matcher(client, seeded, khqr_on, monkeypatch):
 def test_production_refuses_test_mode():
     from app.config import Settings
     assert any("TEST_MODE" in p for p in Settings(environment="production", khqr_test_mode=True).validate_for_production())
+
+
+def test_khqr_picture_for_saving_on_phones(client, seeded, khqr_on):
+    """The KHQR card as a PNG file: works without the session header (Telegram downloads it)."""
+    import io
+
+    from PIL import Image
+
+    h = _session(client, seeded)
+    o = _order(client, h, seeded)
+    r = client.get(f"/api/public/orders/{o['public_id']}/khqr.png")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert "attachment" in r.headers["content-disposition"] and r.headers["cache-control"] == "no-store"
+    assert Image.open(io.BytesIO(r.content)).size == (600, 880)
+    assert client.get("/api/public/orders/not-a-real-order/khqr.png").status_code == 404
+    # Once paid, the picture is gone (nothing left to pay)
+    from app.services import aba_notices
+    with seeded() as db:
+        aba_notices.process(db, _paid_text(), __import__("app.models.base", fromlist=["utcnow"]).utcnow())
+    assert client.get(f"/api/public/orders/{o['public_id']}/khqr.png").status_code == 404

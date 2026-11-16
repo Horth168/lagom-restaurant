@@ -641,5 +641,8 @@
   "shift.when": "When",
   "shift.who": "Cashier",
   "shift.stillOpen": "Open",
-  "pay.free": "Free (stamp card)"
+  "pay.free": "Free (stamp card)",
+  "pay.savedTelegram": "Telegram is downloading the QR. Then open your bank app → Scan → choose the picture.",
+  "pay.savedShare": "Saved. Open your bank app → Scan → choose the picture.",
+  "pay.savedDownload": "The QR picture was downloaded."
 }

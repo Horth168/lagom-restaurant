@@ -1,8 +1,9 @@
+import { saveImage } from '../../lib/saveImage'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Banknote, Check, ChevronRight, Clock, Download, ShieldCheck } from 'lucide-react'
 import { KhqrCard } from '../../components/KhqrCard'
-import { KhqrLogo } from '../../components/KhqrLogo'
+import { KhqrBadge } from '../../components/KhqrLogo'
 import { useI18n } from '../../i18n'
 import { api, ApiError } from '../../lib/api'
 import { formatKHR, formatUSD } from '../../lib/money'
@@ -173,8 +174,8 @@ function PaymentView({ order, onChange, reload }) {
                   className="flex w-full items-center gap-4 px-4 py-4 text-left disabled:opacity-40"
                 >
                   {m.id === 'khqr' ? (
-                    <span className="grid h-10 w-14 shrink-0 place-items-center rounded-md border border-line bg-white">
-                      <KhqrLogo height={13} />
+                    <span className="grid h-10 w-14 shrink-0 place-items-center">
+                      <KhqrBadge height={23} />
                     </span>
                   ) : (
                     <span className="grid h-10 w-14 shrink-0 place-items-center rounded-md bg-surface-2 text-ink">
@@ -245,6 +246,17 @@ function KhqrPayment({ order, testMode, onChooseAnother, reload }) {
   const { headers } = useCustomer()
   const p = order.payment
   const [qrSrc, setQrSrc] = useState('')
+  const [saved, setSaved] = useState('')
+
+  async function saveQr() {
+    const base = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, '')
+    const how = await saveImage({
+      dataUrl: qrSrc,
+      fileUrl: `${base}/api/public/orders/${order.public_id}/khqr.png`,
+      fileName: `LAGOM-order-${order.number}-KHQR.png`,
+    })
+    setSaved(how === 'telegram' ? 'pay.savedTelegram' : how === 'downloaded' ? 'pay.savedDownload' : how === 'shared' ? 'pay.savedShare' : '')
+  }
   const remaining = useCountdown(p.expires_at)
   const [simulating, setSimulating] = useState(false)
 
@@ -264,14 +276,14 @@ function KhqrPayment({ order, testMode, onChooseAnother, reload }) {
       <KhqrCard qrString={p.qr_string} amountMinor={p.amount_minor} currency={p.currency} onQr={setQrSrc} />
       <p className="mt-5 max-w-xs text-center text-sm text-muted">{t('pay.scan')}</p>
       {qrSrc && (
-        <a
-          href={qrSrc}
-          download={`LAGOM-order-${order.number}-KHQR.png`}
-          className="mt-4 flex h-12 w-full max-w-[300px] items-center justify-center gap-2 rounded-full bg-brand font-semibold text-on-brand"
+        <button
+          onClick={saveQr}
+          className="mt-4 flex h-12 w-full max-w-[300px] items-center justify-center gap-2 rounded-full bg-brand font-semibold text-on-brand transition active:scale-[0.98]"
         >
           <Download size={18} /> {t('pay.saveQr')}
-        </a>
+        </button>
       )}
+      {saved && <p role="status" className="mt-2 text-center text-sm text-series-1">{t(saved)}</p>}
       <p className="mt-2 max-w-xs text-center text-xs text-muted">{t('pay.samePhone')}</p>
 
       <div className="mt-6"><WaitingDot label={t('pay.waiting')} /></div>

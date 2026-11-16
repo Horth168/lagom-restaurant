@@ -159,6 +159,31 @@ def pay(public_id: str, body: PayIn, db: Session = Depends(get_db),
     return order_out(order)
 
 
+@router.get("/api/public/orders/{public_id}/khqr.png", dependencies=[Depends(rate_limit("khqr-image", 30))])
+def khqr_picture(public_id: str, db: Session = Depends(get_db)):
+    """The KHQR card as a picture file, so phones (also inside Telegram) can save it to Photos.
+
+    No session header is needed because Telegram downloads the file itself; the order's
+    public id is long and random, and only a KHQR still waiting for payment is shown.
+    """
+    from fastapi import Response
+
+    from app.services.khqr_image import render_card
+
+    order = db.scalar(select(Order).where(Order.public_id == public_id))
+    pending = next((p for p in reversed(order.payments) if p.status == PaymentStatus.PENDING
+                    and p.payment_option == "khqr" and p.qr_string), None) if order else None
+    if not order or order.status != OrderStatus.PENDING_PAYMENT or not pending:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found.")
+    amount = f"{pending.amount_minor:,}" if pending.currency == Currency.KHR else f"{pending.amount_minor / 100:.2f}"
+    png = render_card(pending.qr_string, amount_text=amount, currency=pending.currency.value)
+    return Response(png, media_type="image/png", headers={
+        "Content-Disposition": f'attachment; filename="LAGOM-order-{order.display_number}-KHQR.png"',
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "https://web.telegram.org",  # Telegram Web downloads it from the page
+    })
+
+
 @router.get("/api/public/loyalty")
 def my_stamp_card(db: Session = Depends(get_db), session: TableSession = Depends(current_table_session)):
     """Stamp card of the Telegram customer using this session (table QR customers: not enabled)."""

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Banknote, CheckCircle2, History, LayoutDashboard, LogOut, Minus, Percent, Plus, Printer, Search, Trash2, X } from 'lucide-react'
 import { KhqrCard } from '../../components/KhqrCard'
-import { KhqrLogo } from '../../components/KhqrLogo'
+import { KhqrBadge } from '../../components/KhqrLogo'
 import { Mark } from '../../components/Logo'
 import { ProductImage } from '../../components/ProductImage'
 import { Receipt, printSoon } from '../../components/Receipt'
@@ -250,7 +250,7 @@ function Pos() {
           </dl>
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Button variant="primary" size="lg" disabled={!canCharge} onClick={() => charge('cash')} className="h-14"><Banknote size={18} /> {t('pos.cash')}</Button>
-            <Button size="lg" disabled={!canCharge} onClick={() => charge('khqr')} className="h-14 border-[#E1232E]/40 bg-white text-[#E1232E]"><KhqrLogo height={14} /></Button>
+            <Button size="lg" disabled={!canCharge} onClick={() => charge('khqr')} className="h-14"><KhqrBadge height={26} /></Button>
           </div>
         </div>
       </aside>

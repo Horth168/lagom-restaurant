@@ -1,8 +1,9 @@
-import { lazy, Suspense, useState } from 'react'
+import { ThemeIcon } from '../../components/ThemeIcon'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import {
-  Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, Percent, QrCode, Receipt, Settings, ShoppingBag,
-  ScrollText, Star, Sun, Users, UtensilsCrossed, Wallet, X,
+  Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Percent, QrCode, Receipt, Settings, ShoppingBag,
+  ScrollText, Star, Users, UtensilsCrossed, Wallet, X,
 } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
 import { ServiceAlerts } from '../../components/ServiceAlerts'
@@ -71,6 +72,19 @@ function Shell({ items, children }) {
   const [account, setAccount] = useState(false)
   const [open, setOpen] = useState(false)
   const [theme, setTheme] = useState(currentTheme)
+
+  // Mobile menu: Escape closes it, and the page behind does not scroll while it is open
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    const before = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = before
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
   const nextLang = LANGUAGES[(LANGUAGES.findIndex((l) => l.code === lang) + 1) % LANGUAGES.length]
 
   const sidebar = (
@@ -110,8 +124,8 @@ function Shell({ items, children }) {
           <button onClick={() => saveLanguage(nextLang.code)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm text-cream/80 hover:bg-cream/10" title={t('lang.title')}>
             <Globe size={16} /> {nextLang.label}
           </button>
-          <button onClick={() => setTheme(toggleTheme())} className="grid size-9 place-items-center rounded-lg text-cream/80 hover:bg-cream/10" aria-label={t('theme.toggle')}>
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <button onClick={(e) => setTheme(toggleTheme(e))} className="grid size-9 place-items-center rounded-lg text-cream/80 transition hover:bg-cream/10 active:scale-90" aria-label={t('theme.toggle')}>
+            <ThemeIcon theme={theme} size={16} />
           </button>
           <button onClick={logout} className="grid size-9 place-items-center rounded-lg text-cream/80 hover:bg-cream/10" aria-label={t('kds.signOut')}>
             <LogOut size={16} />
@@ -125,14 +139,25 @@ function Shell({ items, children }) {
     <div className="min-h-dvh bg-bg lg:pl-60">
       {account && <Suspense fallback={null}><MyAccount onClose={() => setAccount(false)} /></Suspense>}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 lg:block">{sidebar}</aside>
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} aria-label={t('common.close')} />
-          <aside className="relative h-full w-64 animate-fade-in">{sidebar}</aside>
-        </div>
-      )}
+      <div className={`fixed inset-0 z-50 lg:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
+        <button
+          tabIndex={open ? 0 : -1}
+          className={`absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${open ? 'opacity-100' : 'opacity-0'}`}
+          onClick={() => setOpen(false)}
+          aria-label={t('common.close')}
+        />
+        <aside
+          inert={!open}
+          className={`relative h-full w-64 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          {sidebar}
+        </aside>
+      </div>
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur lg:hidden">
-        <button onClick={() => setOpen(true)} aria-label={t('admin.menu')}><MenuIcon size={22} /></button>
+        <button onClick={() => setOpen(true)} aria-label={t('admin.menu')} aria-expanded={open}
+          className="-ml-1 grid size-10 place-items-center rounded-lg transition hover:bg-surface-2 active:scale-90">
+          <Burger open={open} />
+        </button>
         <LogoHorizontal height={22} className="text-brand" />
       </header>
       <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
@@ -140,6 +165,18 @@ function Shell({ items, children }) {
         {children}
       </main>
     </div>
+  )
+}
+
+/** Three lines that turn into an X while the menu is open. */
+function Burger({ open }) {
+  const line = 'absolute left-0 block h-[2px] w-[22px] rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none'
+  return (
+    <span className="relative block h-4 w-[22px]" aria-hidden="true">
+      <span className={`${line} ${open ? 'top-[7px] rotate-45' : 'top-0'}`} />
+      <span className={`${line} top-[7px] ${open ? 'scale-x-0 opacity-0' : 'opacity-100'}`} />
+      <span className={`${line} ${open ? 'top-[7px] -rotate-45' : 'top-[14px]'}`} />
+    </span>
   )
 }
 
