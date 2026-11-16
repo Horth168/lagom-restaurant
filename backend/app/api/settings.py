@@ -30,8 +30,8 @@ def read_settings(db: Session = Depends(get_db), _: CurrentStaff = Depends(requi
         "settings": _jsonable(svc.all_settings(db)),
         # Integration status only – secret values are never sent to the browser
         "integrations": {
-            "payway_configured": s.payway_enabled,
-            "payway_sandbox": s.payway_is_sandbox,
+            "khqr_configured": s.khqr_enabled,
+            "payment_listener_configured": s.listener_enabled,
             "telegram_configured": bool(s.telegram_bot_token and s.telegram_chat_id),
             "r2_configured": bool(s.r2_bucket and s.r2_access_key_id),
             "environment": s.environment,

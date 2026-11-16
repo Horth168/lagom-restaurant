@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { Check, ChevronRight, Clock, ShieldCheck, Smartphone } from 'lucide-react'
+import { Banknote, Check, ChevronRight, Clock, Download, ShieldCheck } from 'lucide-react'
+import { KhqrLogo } from '../../components/KhqrLogo'
 import { useI18n } from '../../i18n'
 import { api, ApiError } from '../../lib/api'
 import { formatKHR, formatUSD } from '../../lib/money'
@@ -92,18 +93,14 @@ function PaymentView({ order, onChange, reload }) {
   const [choosing, setChoosing] = useState(!order.payment)
 
   useEffect(() => {
-    api('/api/public/payment-options').then(setOptions).catch(() => setOptions({ online_payment_available: false }))
+    api('/api/public/payment-options').then(setOptions).catch(() => setOptions({ khqr_available: false, cash_available: true }))
   }, [])
 
-  async function start(paymentOption) {
+  async function start(method) {
     setBusy(true)
     setProblem(null)
     try {
-      const updated = await api(`/api/public/orders/${order.public_id}/pay`, {
-        method: 'POST',
-        headers,
-        body: { payment_option: paymentOption, currency },
-      })
+      const updated = await api(`/api/public/orders/${order.public_id}/pay`, { method: 'POST', headers, body: { method, currency } })
       onChange(updated)
       setChoosing(false)
     } catch (e) {
@@ -115,6 +112,10 @@ function PaymentView({ order, onChange, reload }) {
   }
 
   const total = currency === 'KHR' ? formatKHR(order.total_khr) : formatUSD(order.total_usd_cents)
+  const methods = [
+    { id: 'khqr', available: options?.khqr_available, hint: t('pay.khqr.hint') },
+    { id: 'cash', available: options?.cash_available, hint: t('pay.cash.hint') },
+  ]
 
   return (
     <Shell title={t('pay.title')} back="..">
@@ -133,15 +134,10 @@ function PaymentView({ order, onChange, reload }) {
           {t('pay.testMode')}
         </p>
       )}
-      {options?.sandbox && (
-        <p className="mt-4 rounded-lg border border-dashed border-accent px-3 py-2 text-center text-xs text-accent">{t('pay.sandbox')}</p>
-      )}
 
-      {options && !options.online_payment_available ? (
-        <p className="mt-8 rounded-2xl bg-surface-2 p-5 text-center">{t('pay.unavailable', { n: order.number })}</p>
-      ) : choosing || !order.payment ? (
+      {choosing || !order.payment ? (
         <section className="mt-6">
-          {options && options.currencies?.length > 1 && (
+          {options?.currencies?.length > 1 && (
             <div className="mb-5">
               <span className="text-sm font-medium">{t('pay.currency')}</span>
               <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup">
@@ -151,9 +147,9 @@ function PaymentView({ order, onChange, reload }) {
                     role="radio"
                     aria-checked={currency === c}
                     onClick={() => setCurrency(c)}
-                    className={`h-12 rounded-xl border text-[15px] font-medium ${currency === c ? 'border-brand bg-brand text-on-brand' : 'border-line bg-surface'}`}
+                    className={`h-12 rounded-xl border text-[15px] font-medium tabular-nums ${currency === c ? 'border-brand bg-brand text-on-brand' : 'border-line bg-surface'}`}
                   >
-                    {c === 'KHR' ? `៛ ${formatKHR(order.total_khr)}` : `$ ${formatUSD(order.total_usd_cents).slice(1)}`}
+                    {c === 'KHR' ? formatKHR(order.total_khr) : formatUSD(order.total_usd_cents)}
                   </button>
                 ))}
               </div>
@@ -161,74 +157,103 @@ function PaymentView({ order, onChange, reload }) {
           )}
           <h2 className="text-sm font-medium">{t('pay.choose')}</h2>
           <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-            {(options?.options ?? []).map((o) => {
-              const allowed = o.currencies.includes(currency)
-              return (
-                <li key={o.id}>
-                  <button
-                    onClick={() => start(o.id)}
-                    disabled={busy || !allowed}
-                    className="flex w-full items-center gap-4 px-4 py-4 text-left disabled:opacity-40"
-                  >
-                    <PayMark id={o.id} />
-                    <span className="flex-1">
-                      <span className="block font-medium">{t(`pay.${o.id}`)}</span>
-                      <span className="block text-xs text-muted">
-                        {o.id === 'abapay_khqr' ? t('pay.abapay_khqr.hint') : t('pay.usdOnly')}
-                      </span>
+            {methods.map((m) => (
+              <li key={m.id}>
+                <button
+                  onClick={() => start(m.id)}
+                  disabled={busy || !options || !m.available}
+                  className="flex w-full items-center gap-4 px-4 py-4 text-left disabled:opacity-40"
+                >
+                  {m.id === 'khqr' ? (
+                    <span className="grid h-10 w-14 shrink-0 place-items-center rounded-md border border-line bg-white">
+                      <KhqrLogo height={13} />
                     </span>
-                    <span className="text-sm font-semibold tabular-nums">{allowed ? total : ''}</span>
-                    <ChevronRight size={18} className="text-muted" />
-                  </button>
-                </li>
-              )
-            })}
+                  ) : (
+                    <span className="grid h-10 w-14 shrink-0 place-items-center rounded-md bg-surface-2 text-ink">
+                      <Banknote size={20} strokeWidth={1.75} />
+                    </span>
+                  )}
+                  <span className="flex-1">
+                    <span className="block font-medium">{t(`pay.${m.id}`)}</span>
+                    <span className="block text-xs text-muted">{m.hint}</span>
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums">{total}</span>
+                  <ChevronRight size={18} className="text-muted" />
+                </button>
+              </li>
+            ))}
           </ul>
+          {options && !options.khqr_available && <p className="mt-3 text-center text-xs text-muted">{t('pay.unavailable', { n: order.number })}</p>}
           {busy && <p className="mt-4 text-center text-sm text-muted">{t('pay.starting')}</p>}
           {problem && <p className="mt-4 text-center text-sm text-danger" role="alert">{problem}</p>}
           <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted">
             <ShieldCheck size={14} /> {t('pay.secure')}
           </p>
         </section>
+      ) : order.payment.method === 'cash' ? (
+        <CashWaiting order={order} onChooseAnother={() => setChoosing(true)} />
       ) : (
-        <QrPayment order={order} testMode={options?.test_mode} onChooseAnother={() => setChoosing(true)} reload={reload} />
+        <KhqrPayment order={order} testMode={options?.test_mode} onChooseAnother={() => setChoosing(true)} reload={reload} />
       )}
     </Shell>
   )
 }
 
-function PayMark({ id }) {
-  const style = {
-    abapay_khqr: 'bg-[#E1232E] text-white',
-    wechat: 'bg-[#07C160] text-white',
-    alipay: 'bg-[#1677FF] text-white',
-  }[id]
-  const label = { abapay_khqr: 'KHQR', wechat: 'WeChat', alipay: 'Alipay' }[id]
-  return <span className={`grid h-9 w-14 shrink-0 place-items-center rounded-md text-[10px] font-bold ${style}`}>{label}</span>
+function WaitingDot({ label }) {
+  return (
+    <div className="flex items-center gap-2 text-sm" aria-live="polite">
+      <span className="relative flex size-2.5">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
+        <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
+      </span>
+      {label}
+    </div>
+  )
 }
 
-function QrPayment({ order, testMode, onChooseAnother, reload }) {
+function CashWaiting({ order, onChooseAnother }) {
   const { t } = useI18n()
+  const p = order.payment
+  const amount = p.currency === 'KHR' ? formatKHR(p.amount_minor) : formatUSD(p.amount_minor)
+  return (
+    <section className="mt-6 flex flex-col items-center text-center">
+      <div className="w-full rounded-2xl border border-line bg-surface p-6">
+        <Banknote size={36} strokeWidth={1.25} className="mx-auto text-accent" />
+        <h2 className="mt-3 font-display text-2xl">{t('pay.cashTitle')}</h2>
+        <p className="mt-4 font-display text-6xl text-accent">#{order.number}</p>
+        <p className="mt-2 text-2xl font-semibold tabular-nums">{amount}</p>
+        <p className="mx-auto mt-4 max-w-xs text-sm text-muted">{t('pay.cashBody', { n: order.number })}</p>
+      </div>
+      <div className="mt-6"><WaitingDot label={t('pay.waiting')} /></div>
+      <button onClick={onChooseAnother} className="mt-6 text-sm font-medium text-accent underline-offset-4 hover:underline">
+        {t('pay.change')}
+      </button>
+    </section>
+  )
+}
+
+function KhqrPayment({ order, testMode, onChooseAnother, reload }) {
+  const { t } = useI18n()
+  const { headers } = useCustomer()
   const p = order.payment
   const [qrSrc, setQrSrc] = useState('')
   const remaining = useCountdown(p.expires_at)
   const [simulating, setSimulating] = useState(false)
-  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)
 
   useEffect(() => {
-    // Drawn on the phone from PayWay's QR text (lighter than downloading PayWay's large QR image)
-    QRCode.toDataURL(p.qr_string, { errorCorrectionLevel: 'M', margin: 1, width: 560, color: { dark: '#000000', light: '#ffffff' } })
+    // High error correction so the currency badge in the middle never stops the QR from scanning
+    QRCode.toDataURL(p.qr_string, { errorCorrectionLevel: 'H', margin: 0, width: 640, color: { dark: '#000000', light: '#ffffff' } })
       .then(setQrSrc)
       .catch(() => setQrSrc(''))
   }, [p.qr_string])
 
-  const amount = p.currency === 'KHR' ? formatKHR(p.amount_minor) : formatUSD(p.amount_minor)
-  const isKhqr = p.method === 'abapay_khqr'
+  const isKhr = p.currency === 'KHR'
+  const amountText = isKhr ? Math.round(p.amount_minor).toLocaleString('en-US') : (p.amount_minor / 100).toFixed(2)
 
   async function simulate() {
     setSimulating(true)
     try {
-      await api('/api/dev/payway-simulator/pay', { method: 'POST', body: { tran_id: p.tran_id } })
+      await api('/api/dev/khqr/simulate-payment', { method: 'POST', headers, body: { public_id: order.public_id } })
       await reload()
     } finally {
       setSimulating(false)
@@ -237,43 +262,54 @@ function QrPayment({ order, testMode, onChooseAnother, reload }) {
 
   return (
     <section className="mt-6 flex flex-col items-center">
-      {/* KHQR-style card: red header, merchant, amount, QR (check against ABA's display guideline before launch) */}
-      <div className="w-full max-w-[320px] overflow-hidden rounded-2xl bg-white text-[#1a1a1a] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-        <div className={`flex h-12 items-center justify-center text-sm font-bold tracking-[0.2em] text-white ${isKhqr ? 'bg-[#E1232E]' : p.method === 'wechat' ? 'bg-[#07C160]' : 'bg-[#1677FF]'}`}>
-          {isKhqr ? 'KHQR' : t(`pay.${p.method}`)}
+      {/* KHQR card: red header with the KHQR mark and a cut corner, merchant, amount, dashed line, QR */}
+      <div className="w-full max-w-[300px] overflow-hidden rounded-[18px] bg-white text-[#1a1a1a] shadow-[0_10px_40px_rgba(0,0,0,0.14)]">
+        <div className="relative h-[52px] bg-[#E1232E]">
+          <div className="flex h-full items-center justify-center pr-6">
+            <KhqrLogo height={20} color="#ffffff" />
+          </div>
+          {/* the KHQR card's signature diagonal corner */}
+          <span className="absolute right-0 bottom-0 h-0 w-0 border-b-[22px] border-l-[22px] border-b-white border-l-transparent" aria-hidden="true" />
         </div>
-        <div className="px-6 pt-4">
-          <div className="text-xs text-[#666]">LAGOM</div>
-          <div className="text-2xl font-bold tabular-nums">{amount}</div>
+        <div className="px-7 pt-4">
+          <div className="text-[13px] font-medium text-[#555]">LAGOM</div>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="text-[26px] font-bold leading-none tabular-nums">{amountText}</span>
+            <span className="text-[13px] font-semibold text-[#555]">{isKhr ? 'KHR' : 'USD'}</span>
+          </div>
         </div>
-        <div className="mx-6 my-3 border-t border-dashed border-[#ccc]" />
-        <div className="px-6 pb-6">
+        <div className="relative my-4" aria-hidden="true">
+          <div className="mx-7 border-t-2 border-dashed border-[#d9d9d9]" />
+        </div>
+        <div className="relative px-7 pb-7">
           {qrSrc ? (
-            <img src={qrSrc} alt="Payment QR code" className="aspect-square w-full" />
+            <img src={qrSrc} alt="KHQR payment code" className="aspect-square w-full" />
           ) : (
             <div className="skeleton aspect-square w-full rounded" />
+          )}
+          {qrSrc && (
+            <span className="absolute top-1/2 left-1/2 grid size-11 -translate-x-1/2 -translate-y-[calc(50%+14px)] place-items-center rounded-full border-[3px] border-white bg-black text-[19px] font-bold text-white">
+              {isKhr ? '៛' : '$'}
+            </span>
           )}
         </div>
       </div>
 
-      <p className="mt-5 max-w-xs text-center text-sm text-muted">
-        {isKhqr ? t('pay.scan') : t('pay.scanWallet', { app: t(`pay.${p.method}`) })}
-      </p>
-
-      {isKhqr && isMobile && p.deeplink && (
-        <a href={p.deeplink} className="mt-4 flex h-12 w-full max-w-[320px] items-center justify-center gap-2 rounded-full bg-brand font-semibold text-on-brand">
-          <Smartphone size={18} /> {t('pay.openAba')}
+      <p className="mt-5 max-w-xs text-center text-sm text-muted">{t('pay.scan')}</p>
+      {qrSrc && (
+        <a
+          href={qrSrc}
+          download={`LAGOM-order-${order.number}-KHQR.png`}
+          className="mt-4 flex h-12 w-full max-w-[300px] items-center justify-center gap-2 rounded-full bg-brand font-semibold text-on-brand"
+        >
+          <Download size={18} /> {t('pay.saveQr')}
         </a>
       )}
+      <p className="mt-2 max-w-xs text-center text-xs text-muted">{t('pay.samePhone')}</p>
 
-      <div className="mt-5 flex items-center gap-2 text-sm" aria-live="polite">
-        <span className="relative flex size-2.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
-        </span>
-        {t('pay.waiting')}
-      </div>
+      <div className="mt-6"><WaitingDot label={t('pay.waiting')} /></div>
       {remaining && <p className="mt-1 text-xs text-muted tabular-nums">{t('pay.expiresIn', { time: remaining })}</p>}
+      <p className="mt-2 max-w-xs text-center text-xs text-muted">{t('pay.auto')}</p>
 
       {testMode && (
         <button
@@ -284,7 +320,6 @@ function QrPayment({ order, testMode, onChooseAnother, reload }) {
           {t('pay.simulate')}
         </button>
       )}
-
       <button onClick={onChooseAnother} className="mt-6 text-sm font-medium text-accent underline-offset-4 hover:underline">
         {t('pay.change')}
       </button>

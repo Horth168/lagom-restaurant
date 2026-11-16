@@ -46,8 +46,8 @@ class ItemStatus(StrEnum):
 
 
 class PaymentProvider(StrEnum):
-    ABA_PAYWAY = "ABA_PAYWAY"
-    CASH = "CASH"
+    ABA_KHQR = "ABA_KHQR"  # KHQR paid into the shop's ABA account, confirmed from ABA's Telegram notice
+    CASH = "CASH"  # paid at the counter, confirmed by a cashier
 
 
 class PaymentStatus(StrEnum):

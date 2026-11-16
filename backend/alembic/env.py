@@ -25,6 +25,10 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     with engine.connect() as connection:
+        if connection.dialect.name == "sqlite":
+            # SQLite rebuilds tables to alter columns; foreign keys must be off while it does
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

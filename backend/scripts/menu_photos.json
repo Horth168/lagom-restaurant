@@ -142,5 +142,17 @@
     "image_credit": "Photo: Dennis Wong from Hong Kong, Hong Kong · CC BY 2.0 · Wikimedia Commons",
     "image_source_url": "https://commons.wikimedia.org/wiki/File:Mango_sticy_rice_(3859549574).jpg",
     "license": "CC BY 2.0"
+  },
+  "Bai Sach Chrouk": {
+    "image_url": "/menu/bai-sach-chrouk.jpg",
+    "image_credit": "",
+    "image_source_url": "",
+    "license": "Provided by LAGOM"
+  },
+  "Lort Cha": {
+    "image_url": "/menu/lort-cha.jpg",
+    "image_credit": "",
+    "image_source_url": "",
+    "license": "Provided by LAGOM"
   }
 }

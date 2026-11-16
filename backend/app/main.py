@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, orders_public, public, settings, staff, tables
+from app.api import auth, orders_public, payments_admin, public, settings, staff, tables
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -20,10 +20,9 @@ log = logging.getLogger("lagom")
 
 def _expire_once() -> int:
     from app.services.payments import expire_due_orders
-    from app.services.payway import get_payway
 
     with SessionLocal() as db:
-        return expire_due_orders(db, get_payway())
+        return expire_due_orders(db)
 
 
 async def _expiry_loop() -> None:
@@ -46,9 +45,14 @@ async def lifespan(app: FastAPI):
         if problems:
             # Refuse to start a misconfigured production server (e.g. sandbox payments)
             raise RuntimeError("Production configuration problems: " + "; ".join(problems))
-    if s.payway_simulator:
-        log.warning("PAYWAY SIMULATOR IS ON - development only, no real money is involved")
-    task = asyncio.create_task(_expiry_loop()) if s.environment != "test" else None
+    if s.khqr_test_mode:
+        log.warning("KHQR TEST MODE IS ON - development only, payments can be faked")
+    task = None
+    if s.environment != "test":
+        task = asyncio.create_task(_expiry_loop())
+        from app.services import tg_listener
+
+        tg_listener.start()  # reads ABA's payment notices (only if configured)
     yield
     if task:
         task.cancel()
@@ -88,7 +92,8 @@ def create_app() -> FastAPI:
             conn.execute(text("SELECT 1"))
         return {"status": "ok", "environment": s.environment}
 
-    for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router):
+    for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
+              payments_admin.router):
         app.include_router(r)
     return app
 

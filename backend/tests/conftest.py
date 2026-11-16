@@ -4,9 +4,10 @@ os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = "sqlite://"  # in-memory
 os.environ["SECRET_KEY"] = "test-secret-key-test-secret-key-0123456789"
 # Tests must not depend on a developer's local backend/.env
-for _k in ("PAYWAY_SIMULATOR", "ABA_PAYWAY_MERCHANT_ID", "ABA_PAYWAY_API_KEY", "TELEGRAM_BOT_TOKEN"):
+for _k in ("KHQR_TEMPLATE", "PAYWAY_CHAT_ID", "TG_LISTENER_API_ID", "TG_LISTENER_API_HASH", "TG_LISTENER_SESSION",
+           "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"):
     os.environ[_k] = ""
-os.environ["PAYWAY_SIMULATOR"] = "false"
+os.environ["KHQR_TEST_MODE"] = "false"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

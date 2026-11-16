@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import DailyCounter, Order, OrderItem, Payment, PaymentEvent, TableSession
+from app.models import DailyCounter, Order, OrderItem, Payment, PaymentEvent, TableSession  # noqa: F401
 from app.models.base import utcnow
 from app.models.enums import Currency, ItemStatus, OrderChannel, OrderStatus, PaymentStatus
 from app.services import app_settings
@@ -150,44 +150,13 @@ def mark_order_paid(db: Session, order: Order, payment: Payment) -> bool:
     return True
 
 
-def apply_verified_payment(db: Session, payment: Payment, *, approved: bool, paid_minor: int | None,
-                           paid_currency: str, provider_reference: str, source: str) -> str:
-    """Apply a result that came from PayWay's Check Transaction API (never from the phone).
-
-    Returns one of: "paid", "already_paid", "duplicate", "mismatch", "pending".
-    """
-    order = payment.order
-    if not approved:
-        return "pending"
-
-    expected = payment.amount_minor
-    if paid_minor is None or paid_minor != expected or paid_currency != payment.currency.value:
-        payment.status = PaymentStatus.FAILED
-        payment.failure_reason = f"Amount mismatch: expected {expected} {payment.currency}, got {paid_minor} {paid_currency}"
-        log_event(db, payment, "VERIFY", verified=False, note=payment.failure_reason)
-        log.error("Payment %s amount mismatch", payment.tran_id)
-        return "mismatch"
-
-    if payment.status == PaymentStatus.APPROVED:
-        return "already_paid"
-    payment.status = PaymentStatus.APPROVED
-    payment.approved_at = utcnow()
-    payment.provider_reference = provider_reference[:80]
-    log_event(db, payment, "VERIFY", verified=True, note=f"Approved via {source}")
-
-    if mark_order_paid(db, order, payment):
-        for fn in paid_listeners:
-            try:
-                fn(db, order)
-            except Exception:  # a notification problem must never undo a payment
-                log.exception("paid listener failed")
-        return "paid"
-    # The order was already paid by another payment → the customer paid twice
-    payment.failure_reason = "DUPLICATE_PAYMENT_REFUND_REQUIRED"
-    log_event(db, payment, "DUPLICATE", verified=True,
-              note="Order was already paid by another transaction. Refund this payment.")
-    log.error("Duplicate payment %s for order %s", payment.tran_id, order.id)
-    return "duplicate"
+def run_paid_listeners(db: Session, order: Order) -> None:
+    """Kitchen screens, notifications, inventory… (hooks added by later milestones)."""
+    for fn in paid_listeners:
+        try:
+            fn(db, order)
+        except Exception:  # a notification problem must never undo a payment
+            log.exception("paid listener failed")
 
 
 def expire_order(db: Session, order: Order) -> None:

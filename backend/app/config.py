@@ -30,18 +30,23 @@ class Settings(BaseSettings):
     access_token_minutes: int = 60 * 12  # one staff shift
     login_rate_limit_per_minute: int = 10
 
-    # --- ABA PayWay ---
-    aba_payway_merchant_id: str = ""
-    aba_payway_api_key: str = ""
-    # Sandbox: https://checkout-sandbox.payway.com.kh   Production: https://checkout.payway.com.kh
-    aba_payway_base_url: str = "https://checkout-sandbox.payway.com.kh"
-    # RSA public key from ABA, only needed for refunds through the API (PEM text)
-    aba_payway_rsa_public_key: str = ""
-    # DEVELOPMENT ONLY: use the built-in PayWay simulator instead of the real sandbox.
-    # The server refuses to start with this switched on in production.
-    payway_simulator: bool = False
-    # Minutes a customer has to pay before an unpaid order expires
+    # --- Payments: ABA KHQR confirmed from ABA's Telegram notifications ---
+    # Text inside the shop's own ABA KHQR (scan your printed ABA QR with any QR reader and copy the text)
+    khqr_template: str = ""
+    khqr_store_label: str = "LAGOM"
+    # The Telegram group where ABA's PayWay bot posts "$X paid by …" (a negative number like -100…)
+    payway_chat_id: str = ""
+    payway_bot_username: str = "PayWayByABA_bot"
+    # A normal Telegram account that reads that group (bots cannot see other bots' messages).
+    # Create with: python -m scripts.telegram_login
+    tg_listener_api_id: str = ""
+    tg_listener_api_hash: str = ""
+    tg_listener_session: str = ""
+    # Minutes a customer has to pay by KHQR / at the counter before an unpaid order expires
     payment_lifetime_minutes: int = 15
+    cash_lifetime_minutes: int = 60
+    # DEVELOPMENT ONLY: adds a button that fakes ABA's Telegram notice. Refused in production.
+    khqr_test_mode: bool = False
 
     # --- Telegram (optional) ---
     telegram_bot_token: str = ""
@@ -66,12 +71,13 @@ class Settings(BaseSettings):
         return self.environment == "production"
 
     @property
-    def payway_enabled(self) -> bool:
-        return bool(self.aba_payway_merchant_id and self.aba_payway_api_key) or self.payway_simulator
+    def khqr_enabled(self) -> bool:
+        return bool(self.khqr_template.strip())
 
     @property
-    def payway_is_sandbox(self) -> bool:
-        return "sandbox" in self.aba_payway_base_url
+    def listener_enabled(self) -> bool:
+        return bool(self.tg_listener_api_id and self.tg_listener_api_hash and self.tg_listener_session
+                    and self.payway_chat_id.strip())
 
     def validate_for_production(self) -> list[str]:
         """Return a list of configuration problems that must be fixed before going live."""
@@ -80,12 +86,8 @@ class Settings(BaseSettings):
             problems.append("SECRET_KEY must be a long random value")
         if self.database_url.startswith("sqlite"):
             problems.append("DATABASE_URL must point to PostgreSQL in production")
-        if self.payway_simulator:
-            problems.append("PAYWAY_SIMULATOR must be off in production")
-        if not (self.aba_payway_merchant_id and self.aba_payway_api_key):
-            problems.append("ABA PayWay credentials are missing")
-        elif self.payway_is_sandbox:
-            problems.append("ABA_PAYWAY_BASE_URL still points to the sandbox")
+        if self.khqr_test_mode:
+            problems.append("KHQR_TEST_MODE must be off in production")
         if not self.backend_url.startswith("https://"):
             problems.append("BACKEND_URL must use https")
         return problems

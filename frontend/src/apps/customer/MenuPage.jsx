@@ -38,18 +38,23 @@ export function MenuPage() {
     )
   }, [query, menu])
 
-  // Highlight the category tab for the section currently on screen
+  // Highlight the tab of the last section whose heading has passed under the sticky bars
   useEffect(() => {
     if (results) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]) setActiveCat(Number(visible[0].target.dataset.cat))
-      },
-      { rootMargin: '-120px 0px -65% 0px' },
-    )
-    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el))
-    return () => observer.disconnect()
+    const update = () => {
+      let current = visibleCategories[0]?.id
+      for (const c of visibleCategories) {
+        const el = sectionRefs.current[c.id]
+        if (el && el.getBoundingClientRect().top <= 130) current = c.id
+      }
+      // At the very bottom the last (short) section can never reach the top, so pick it explicitly
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
+      setActiveCat(atBottom ? visibleCategories.at(-1)?.id : current)
+    }
+    // Cheap (one position read per category), so it runs directly on every scroll event
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- category list only changes with the menu
   }, [results, visibleCategories.length])
 
   useEffect(() => {

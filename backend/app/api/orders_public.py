@@ -1,5 +1,5 @@
 """Customer checkout, payment and order status (QR table ordering)."""
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,14 +8,14 @@ from app.api.public import current_table_session
 from app.config import get_settings
 from app.core.rate_limit import rate_limit
 from app.db import get_db
-from app.models import Order, Payment, TableSession
+from app.models import Order, TableSession
 from app.models.base import utcnow
 from app.models.enums import Currency, OrderChannel, OrderStatus, PaymentStatus
 from app.services import app_settings
 from app.services.orders import create_order, expire_order
-from app.services.payments import PaymentProblem, handle_callback, start_qr_payment, verify_payment
-from app.services.payway import QR_OPTIONS, USD_ONLY_OPTIONS, get_payway
-from app.services.pricing import CartLineIn, PricingError, price_cart, CartIn
+from app.services import aba_notices
+from app.services.payments import PaymentProblem, start_payment
+from app.services.pricing import CartIn, CartLineIn, PricingError, price_cart
 
 router = APIRouter(tags=["customer orders"])
 
@@ -31,7 +31,7 @@ class CheckoutIn(BaseModel):
 
 
 class PayIn(BaseModel):
-    payment_option: str = Field(pattern="^(abapay_khqr|wechat|alipay)$")
+    method: str = Field(pattern="^(khqr|cash)$")
     currency: Currency = Currency.USD
 
 
@@ -73,13 +73,12 @@ def order_out(order: Order, include_payment: bool = True) -> dict:
     }
     if approved:
         out["payment"] = {"status": "APPROVED", "reference": approved.provider_reference or approved.tran_id,
-                          "tran_id": approved.tran_id, "currency": approved.currency,
+                          "currency": approved.currency,
                           "amount_minor": approved.amount_minor, "method": approved.payment_option}
     elif include_payment and pending and order.status == OrderStatus.PENDING_PAYMENT:
-        out["payment"] = {"status": "PENDING", "tran_id": pending.tran_id, "currency": pending.currency,
+        out["payment"] = {"status": "PENDING", "reference": pending.tran_id, "currency": pending.currency,
                           "amount_minor": pending.amount_minor, "method": pending.payment_option,
-                          "qr_string": pending.qr_string, "deeplink": pending.deeplink,
-                          "expires_at": pending.expires_at}
+                          "qr_string": pending.qr_string, "expires_at": pending.expires_at}
     return out
 
 
@@ -93,19 +92,12 @@ def _own_order(db: Session, session: TableSession, public_id: str) -> Order:
 
 @router.get("/api/public/payment-options")
 def payment_options(db: Session = Depends(get_db)):
-    currencies = app_settings.get_setting(db, "accepted_payment_currencies")
-    client = get_payway()
     s = get_settings()
     return {
-        "online_payment_available": client is not None,
-        "test_mode": s.payway_simulator and not s.is_production,
-        "sandbox": client is not None and not s.payway_simulator and s.payway_is_sandbox,
-        "currencies": currencies,
-        "options": [
-            {"id": "abapay_khqr", "currencies": ["USD", "KHR"]},
-            {"id": "wechat", "currencies": ["USD"]},
-            {"id": "alipay", "currencies": ["USD"]},
-        ],
+        "khqr_available": s.khqr_enabled,
+        "cash_available": True,
+        "test_mode": s.khqr_test_mode and not s.is_production,
+        "currencies": app_settings.get_setting(db, "accepted_payment_currencies"),
     }
 
 
@@ -131,18 +123,12 @@ def checkout(body: CheckoutIn, db: Session = Depends(get_db), session: TableSess
 @router.post("/api/public/orders/{public_id}/pay", dependencies=[Depends(rate_limit("pay", 20))])
 def pay(public_id: str, body: PayIn, db: Session = Depends(get_db),
         session: TableSession = Depends(current_table_session)):
+    """Choose KHQR (pay now with any Cambodian bank app) or cash at the counter."""
     order = _own_order(db, session, public_id)
-    client = get_payway()
-    if client is None:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
-                            "Online payment is not available right now. Please pay at the counter.")
     if body.currency.value not in app_settings.get_setting(db, "accepted_payment_currencies"):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "This currency is not accepted.")
-    if body.currency == Currency.KHR and body.payment_option in USD_ONLY_OPTIONS:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "WeChat Pay and Alipay only accept USD.")
-    assert body.payment_option in QR_OPTIONS
     try:
-        start_qr_payment(db, client, order, body.payment_option, body.currency)
+        start_payment(db, order, body.method, body.currency)
     except PaymentProblem as e:
         raise HTTPException(e.status_code, e.message)
     db.refresh(order)
@@ -159,62 +145,30 @@ def my_orders(db: Session = Depends(get_db), session: TableSession = Depends(cur
 
 @router.get("/api/public/orders/{public_id}", dependencies=[Depends(rate_limit("order-status", 120))])
 def order_status(public_id: str, db: Session = Depends(get_db), session: TableSession = Depends(current_table_session)):
-    """The phone polls this while paying. If PayWay's callback was missed, this asks PayWay directly."""
+    """The phone checks this while waiting. Payment is confirmed by ABA's notice or a cashier, never by the phone."""
     order = _own_order(db, session, public_id)
-    if order.status == OrderStatus.PENDING_PAYMENT:
-        client = get_payway()
-        pending = [p for p in order.payments if p.status == PaymentStatus.PENDING]
-        if client:
-            for p in pending:
-                verify_payment(db, client, p, source="status-poll")
-        db.refresh(order)
-        if order.status == OrderStatus.PENDING_PAYMENT and order.expires_at and order.expires_at <= utcnow() and not pending:
-            expire_order(db, order)
+    if order.status == OrderStatus.PENDING_PAYMENT and order.expires_at and order.expires_at <= utcnow():
+        expire_order(db, order)
         db.commit()
     return order_out(order)
 
 
-@router.post("/api/payments/payway/callback", include_in_schema=False)
-async def payway_callback(request: Request, db: Session = Depends(get_db)):
-    """PayWay's server-to-server notification. Never trusted alone: always confirmed via Check Transaction."""
-    try:
-        if "application/json" in request.headers.get("content-type", ""):
-            payload = await request.json()
-        else:
-            payload = dict(await request.form())
-    except Exception:
-        payload = {}
-    if not isinstance(payload, dict):
-        payload = {}
-    from starlette.concurrency import run_in_threadpool
-
-    await run_in_threadpool(handle_callback, db, get_payway(), payload)
-    # Always the same answer: tells an attacker nothing
-    return {"received": True}
+# ---------------------------------------------------------------- development test mode
+class SimulateIn(BaseModel):
+    public_id: str
 
 
-# ---------------------------------------------------------------- development simulator
-class SimulatePayIn(BaseModel):
-    tran_id: str
-
-
-@router.post("/api/dev/payway-simulator/pay", include_in_schema=False)
-async def simulate_pay(body: SimulatePayIn, db: Session = Depends(get_db)):
-    """DEVELOPMENT ONLY. Pretends the customer paid in ABA Mobile, then PayWay calls our callback."""
+@router.post("/api/dev/khqr/simulate-payment", include_in_schema=False)
+def simulate_payment(body: SimulateIn, db: Session = Depends(get_db),
+                     session: TableSession = Depends(current_table_session)):
+    """DEVELOPMENT ONLY (KHQR_TEST_MODE): pretends ABA posted "$X paid by …" for this order.
+    The text goes through the exact same matcher as a real ABA notice."""
     s = get_settings()
-    if s.is_production or not s.payway_simulator:
+    if s.is_production or not s.khqr_test_mode:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
-    from starlette.concurrency import run_in_threadpool
-
-    from app.services.payway_simulator import get_simulator
-
-    payment = db.scalar(select(Payment).where(Payment.tran_id == body.tran_id))
+    order = _own_order(db, session, body.public_id)
+    payment = next((p for p in order.payments if p.status == PaymentStatus.PENDING and p.payment_option == "khqr"), None)
     if not payment:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown transaction")
-    try:
-        get_simulator().pay(body.tran_id)
-    except (KeyError, ValueError) as e:
-        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
-    # Same path as a real PayWay notification
-    outcome = await run_in_threadpool(handle_callback, db, get_payway(), {"tran_id": body.tran_id, "status": "0"})
+        raise HTTPException(status.HTTP_409_CONFLICT, "No KHQR payment is waiting for this order.")
+    outcome = aba_notices.process(db, aba_notices.simulated_text(payment), utcnow())
     return {"outcome": outcome}

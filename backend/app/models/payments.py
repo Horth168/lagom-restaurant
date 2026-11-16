@@ -16,14 +16,14 @@ class Payment(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
     provider: Mapped[PaymentProvider] = mapped_column(str_enum(PaymentProvider))
-    # Our unique transaction id sent to ABA PayWay (max 20 chars per PayWay spec)
-    tran_id: Mapped[str] = mapped_column(String(20), unique=True, index=True)
-    payment_option: Mapped[str] = mapped_column(String(40), default="")  # abapay_khqr, cards, cash…
+    # Our unique reference, printed inside the KHQR as its bill number (e.g. LG261116-001-7Q)
+    tran_id: Mapped[str] = mapped_column(String(25), unique=True, index=True)
+    payment_option: Mapped[str] = mapped_column(String(40), default="")  # khqr | cash
     currency: Mapped[Currency] = mapped_column(str_enum(Currency))
     # Amount in the payment currency's smallest unit (USD cents or whole riel)
     amount_minor: Mapped[int] = mapped_column(Integer)
     status: Mapped[PaymentStatus] = mapped_column(str_enum(PaymentStatus), index=True)
-    provider_reference: Mapped[str] = mapped_column(String(80), default="")  # e.g. PayWay APV code
+    provider_reference: Mapped[str] = mapped_column(String(80), default="")  # ABA transaction ID
     expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     refunded_minor: Mapped[int] = mapped_column(Integer, default=0)
@@ -34,7 +34,7 @@ class Payment(TimestampMixin, Base):
     received_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     failure_reason: Mapped[str] = mapped_column(String(255), default="")
-    # What the customer scans / taps (not secret). Stored so a page reload shows the same QR.
+    # What the customer scans (not secret). Stored so a page reload shows the same QR.
     qr_string: Mapped[str] = mapped_column(Text, default="")
     deeplink: Mapped[str] = mapped_column(String(1000), default="")
 
@@ -71,3 +71,28 @@ class Refund(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20))  # PENDING, COMPLETED, FAILED
     provider_reference: Mapped[str] = mapped_column(String(80), default="")
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+
+class BankNotice(Base):
+    """One "$X paid by …" message from ABA's PayWay bot in the shop's Telegram group.
+
+    Each ABA transaction ID is stored once (unique), so the same payment can never
+    confirm two orders, even if the message is read again after a restart.
+    """
+
+    __tablename__ = "bank_notices"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trx_id: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    apv: Mapped[str] = mapped_column(String(20), default="")
+    currency: Mapped[Currency] = mapped_column(str_enum(Currency))
+    amount_minor: Mapped[int] = mapped_column(Integer)
+    payer: Mapped[str] = mapped_column(String(120), default="")
+    payer_account: Mapped[str] = mapped_column(String(40), default="")
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+    text: Mapped[str] = mapped_column(Text, default="")
+    # matched | ambiguous | unmatched | resolved
+    outcome: Mapped[str] = mapped_column(String(20), index=True)
+    payment_id: Mapped[int | None] = mapped_column(ForeignKey("payments.id"), nullable=True)
+    resolved_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
