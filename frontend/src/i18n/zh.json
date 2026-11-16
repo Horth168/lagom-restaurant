@@ -645,5 +645,6 @@
   "pay.savedTelegram": "Telegram 正在下载二维码。然后打开银行 App → 扫一扫 → 选择图片。",
   "pay.savedShare": "已保存。打开银行 App → 扫一扫 → 选择图片。",
   "pay.savedDownload": "二维码图片已下载。",
-  "admin.periodLabel": "时间范围"
+  "admin.periodLabel": "时间范围",
+  "home.staff": "员工登录"
 }

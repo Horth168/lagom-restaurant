@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { I18nProvider, useI18n } from './i18n'
 import { Mark, Wordmark } from './components/Logo'
 import { RequireStaff, StaffAuthProvider } from './lib/staffAuth'
+import { useInstallTarget } from './lib/installTarget'
 
 // Each section is loaded only when needed, so customers' phones download only the customer app
 const CustomerApp = lazy(() => import('./apps/customer/CustomerApp'))
@@ -18,6 +19,7 @@ export default function App() {
     <I18nProvider>
       <BrowserRouter>
         <StaffAuthProvider>
+          <InstallTarget />
           <Suspense fallback={<div className="min-h-dvh" />}>
             <Routes>
               <Route path="/t/:qrToken/*" element={<CustomerApp />} />
@@ -36,6 +38,12 @@ export default function App() {
   )
 }
 
+/** Staff pages install as "LAGOM Staff" (opens the dashboard); everything else as the customer app. */
+function InstallTarget() {
+  useInstallTarget()
+  return null
+}
+
 function Welcome() {
   const { t } = useI18n()
   return (
@@ -48,6 +56,9 @@ function Welcome() {
       <p className="max-w-sm text-muted">{t('home.body')}</p>
       <a href="/menu" className="rounded-full border border-line px-6 py-3 text-sm font-medium text-ink hover:bg-surface-2">{t('browse.see')}</a>
       <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold">{t('brand.slogan')}</span>
+      <a href="/login" className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] text-xs text-muted underline-offset-4 hover:underline">
+        {t('home.staff')}
+      </a>
     </main>
   )
 }

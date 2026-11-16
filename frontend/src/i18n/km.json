@@ -645,5 +645,6 @@
   "pay.savedTelegram": "Telegram កំពុងទាញយក QR។ បន្ទាប់មកបើកកម្មវិធីធនាគារ → ស្កេន → ជ្រើសរូបភាព។",
   "pay.savedShare": "បានរក្សាទុក។ បើកកម្មវិធីធនាគារ → ស្កេន → ជ្រើសរូបភាព។",
   "pay.savedDownload": "បានទាញយករូប QR។",
-  "admin.periodLabel": "រយៈពេល"
+  "admin.periodLabel": "រយៈពេល",
+  "home.staff": "ចូលសម្រាប់បុគ្គលិក"
 }

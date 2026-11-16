@@ -645,5 +645,6 @@
   "pay.savedTelegram": "Telegram is downloading the QR. Then open your bank app → Scan → choose the picture.",
   "pay.savedShare": "Saved. Open your bank app → Scan → choose the picture.",
   "pay.savedDownload": "The QR picture was downloaded.",
-  "admin.periodLabel": "Time period"
+  "admin.periodLabel": "Time period",
+  "home.staff": "Staff sign in"
 }
