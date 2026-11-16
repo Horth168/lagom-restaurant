@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" fill="#263D31"/>
+    
+    <defs><clipPath id="half"><circle cx="512" cy="434.5438596491228" r="130.73"/></clipPath></defs>
+    <circle cx="512" cy="434.5438596491228" r="170" fill="none" stroke="#F3EBDD" stroke-width="26.18"/>
+    <rect x="342" y="460.7238596491228" width="340" height="170" fill="#C58B50" clip-path="url(#half)"/>
+    <svg x="292" y="674.5438596491229" width="440" height="84.91228070175438" viewBox="0 0 228 44"><g transform="translate(2.00 2.00) scale(1)" fill="none" stroke="#F3EBDD" stroke-width="2.6" stroke-linecap="square" stroke-linejoin="miter"><path transform="translate(0.00 0)" d="M0 0V40H24"/><path transform="translate(38.00 0)" d="M0 40L15 0L30 40M5.6 26H24.4"/><path transform="translate(82.00 0)" d="M34.14 5.86A20 20 0 1 0 40 20H22"/><path transform="translate(136.00 0)" d="M20 0A20 20 0 1 1 20 40A20 20 0 1 1 20 0Z"/><path transform="translate(190.00 0)" d="M0 40V0L17 26L34 0V40"/></g></svg>
+    
+  </svg>
