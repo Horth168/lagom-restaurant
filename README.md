@@ -39,3 +39,5 @@ POS and the admin dashboard.
 - [Inventory and finance](docs/INVENTORY_AND_FINANCE.md)
 - [Staff, permissions and languages](docs/STAFF_AND_LANGUAGES.md)
 - [Telegram alerts, Mini App and installing on phones](docs/TELEGRAM_SETUP.md)
+- [Put LAGOM online (Cloudflare, Render, Neon, R2)](docs/DEPLOYMENT.md)
+- [Security](docs/SECURITY.md)

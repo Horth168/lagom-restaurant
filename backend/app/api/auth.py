@@ -77,7 +77,7 @@ def change_password(
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Current password is incorrect.")
     if problems := password_problems(body.new_password):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, " ".join(problems))
+        raise HTTPException(422, " ".join(problems))
     user.password_hash = hash_password(body.new_password)
     user.token_version += 1  # sign out other devices
     audit(db, "auth.password_changed", "user", user.id, user_id=user.id, request=request)

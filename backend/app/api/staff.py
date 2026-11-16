@@ -22,7 +22,7 @@ def _check_can_assign(actor: CurrentStaff, role: Role | None, extra: list[str] |
     if extra:
         unknown = [p for p in extra if p not in ALL_PERMISSIONS]
         if unknown:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown permissions: {unknown}")
+            raise HTTPException(422, f"Unknown permissions: {unknown}")
         if not is_owner and (set(extra) & OWNER_ONLY or not set(extra) <= actor.permissions):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot give permissions you do not have.")
 
@@ -53,7 +53,7 @@ def create_staff(
 ):
     _check_can_assign(actor, body.role, body.extra_permissions)
     if problems := password_problems(body.password):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, " ".join(problems))
+        raise HTTPException(422, " ".join(problems))
     email = body.email.lower().strip()
     if db.scalar(select(User.id).where(func.lower(User.email) == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists.")
@@ -119,7 +119,7 @@ def reset_password(
     if user.role == Role.OWNER and actor.user.role != Role.OWNER:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the owner can reset an owner's password.")
     if problems := password_problems(body.new_password):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, " ".join(problems))
+        raise HTTPException(422, " ".join(problems))
     user.password_hash = hash_password(body.new_password)
     user.token_version += 1
     audit(db, "staff.password_reset", "user", user.id, actor.id, request=request)

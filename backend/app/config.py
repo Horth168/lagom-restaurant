@@ -4,10 +4,10 @@ Every value comes from environment variables (or a local `.env` file that is
 never committed). See `backend/.env.example` for the full list with comments.
 """
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
     # Public URL of this backend (used for the ABA PayWay callback)
     backend_url: str = "http://localhost:8000"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+    # Comma-separated in the environment: "https://a.example,https://b.example" (NoDecode: not JSON)
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:5173"])
 
     # --- Database ---
     database_url: str = "sqlite:///./lagom.db"
@@ -29,6 +30,9 @@ class Settings(BaseSettings):
     secret_key: str = "dev-only-change-me-dev-only-change-me"
     access_token_minutes: int = 60 * 12  # one staff shift
     login_rate_limit_per_minute: int = 10
+    # How many proxies sit in front of this server and add to X-Forwarded-For (Render: 1).
+    # 0 = ignore that header (anyone can fake it). See docs/DEPLOYMENT.md to check the value.
+    trusted_proxy_hops: int = 0
 
     # --- Payments: ABA KHQR confirmed from ABA's Telegram notifications ---
     # Text inside the shop's own ABA KHQR (scan your printed ABA QR with any QR reader and copy the text)
@@ -90,6 +94,10 @@ class Settings(BaseSettings):
             problems.append("KHQR_TEST_MODE must be off in production")
         if not self.backend_url.startswith("https://"):
             problems.append("BACKEND_URL must use https")
+        if not self.frontend_url.startswith("https://"):
+            problems.append("FRONTEND_URL must use https (printed table QR codes point to it)")
+        if not self.cors_origins or any(not o.startswith("https://") for o in self.cors_origins):
+            problems.append("CORS_ORIGINS must list only your https website address(es)")
         return problems
 
 

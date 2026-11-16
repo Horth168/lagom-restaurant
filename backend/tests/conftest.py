@@ -26,8 +26,23 @@ from app.models.enums import Role  # noqa: E402
 PASSWORD = "Test-password-123"
 
 
+# Set TEST_DATABASE_URL=postgresql://... to run every test on PostgreSQL (GitHub does this on each push).
+# Without it, tests use a fast in-memory SQLite database.
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "")
+
+
 @pytest.fixture
 def engine():
+    if TEST_DATABASE_URL:
+        from app.db import _make_engine
+
+        eng = _make_engine(TEST_DATABASE_URL)
+        Base.metadata.drop_all(eng)
+        Base.metadata.create_all(eng)
+        yield eng
+        Base.metadata.drop_all(eng)
+        eng.dispose()
+        return
     eng = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
 
     @event.listens_for(eng, "connect")

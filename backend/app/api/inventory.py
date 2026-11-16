@@ -148,18 +148,18 @@ def adjust_stock(body: AdjustIn, request: Request, db: Session = Depends(get_db)
                  staff: CurrentStaff = Depends(require("inventory.edit"))):
     """Correct the count (counted_quantity) or record waste / a +/- change."""
     if body.kind not in (StockMovementKind.ADJUSTMENT, StockMovementKind.WASTE):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Use ADJUSTMENT or WASTE.")
+        raise HTTPException(422, "Use ADJUSTMENT or WASTE.")
     i = _ingredient(db, body.ingredient_id, lock=True)
     if body.counted_quantity is not None:
         change = body.counted_quantity - Decimal(i.quantity)
     elif body.change is not None:
         change = body.change
     else:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Give a change or the counted quantity.")
+        raise HTTPException(422, "Give a change or the counted quantity.")
     if body.kind == StockMovementKind.WASTE and change > 0:
         change = -change  # waste always reduces stock
     if change == 0:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Nothing to change.")
+        raise HTTPException(422, "Nothing to change.")
     m = inv.adjust(db, i, change=change, kind=body.kind, user_id=staff.id, note=body.note)
     audit(db, "inventory.adjusted", "ingredient", i.id, staff.id, {"kind": body.kind, "change": str(change), "note": body.note}, request)
     db.commit()
@@ -213,7 +213,7 @@ def record_purchase(body: PurchaseIn, request: Request, db: Session = Depends(ge
                     staff: CurrentStaff = Depends(require("inventory.edit"))):
     """Stock bought from a supplier: adds the quantities and updates the average cost."""
     if body.supplier_id and not db.get(Supplier, body.supplier_id):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Supplier not found.")
+        raise HTTPException(422, "Supplier not found.")
     p = Purchase(supplier_id=body.supplier_id, purchased_on=body.purchased_on, invoice_ref=body.invoice_ref,
                  notes=body.notes, total_usd_cents=sum(ln.line_total_usd_cents for ln in body.lines),
                  created_by_user_id=staff.id)
@@ -259,11 +259,11 @@ def set_recipe(product_id: int, body: list[RecipeLineIn], request: Request, db: 
     seen = set()
     for ln in body:
         if not db.get(Ingredient, ln.ingredient_id):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Unknown ingredient.")
+            raise HTTPException(422, "Unknown ingredient.")
         if ln.option_id is not None and ln.option_id not in option_ids:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "That option does not belong to this product.")
+            raise HTTPException(422, "That option does not belong to this product.")
         if (ln.ingredient_id, ln.option_id) in seen:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "The same ingredient is listed twice.")
+            raise HTTPException(422, "The same ingredient is listed twice.")
         seen.add((ln.ingredient_id, ln.option_id))
     for r in db.scalars(select(RecipeItem).where(RecipeItem.product_id == product_id)):
         db.delete(r)

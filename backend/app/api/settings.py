@@ -50,27 +50,27 @@ def update_settings(
 ):
     for key, value in body.items():
         if key not in svc.DEFAULTS or key in svc.INTERNAL_KEYS:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown setting: {key}")
+            raise HTTPException(422, f"Unknown setting: {key}")
         _, typ = svc.DEFAULTS[key]
         if typ is Decimal:
             try:
                 value = Decimal(str(value))
             except InvalidOperation:
-                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be a number")
+                raise HTTPException(422, f"{key} must be a number")
             if key == "khr_per_usd" and not (Decimal(1000) <= value <= Decimal(10000)):
-                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Exchange rate looks wrong (1000–10000).")
+                raise HTTPException(422, "Exchange rate looks wrong (1000–10000).")
         elif typ is bool and not isinstance(value, bool):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be true or false")
+            raise HTTPException(422, f"{key} must be true or false")
         elif typ is str and not isinstance(value, str):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be text")
+            raise HTTPException(422, f"{key} must be text")
         elif typ is list and not isinstance(value, list):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be a list")
+            raise HTTPException(422, f"{key} must be a list")
         if key == "daily_summary_time" and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", value):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Use a time like 22:00")
+            raise HTTPException(422, "Use a time like 22:00")
         if key == "display_currency" and value not in ("USD", "KHR"):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "display_currency must be USD or KHR")
+            raise HTTPException(422, "display_currency must be USD or KHR")
         if key == "inventory_deduct_on" and value not in ("PAID", "READY"):
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "inventory_deduct_on must be PAID or READY")
+            raise HTTPException(422, "inventory_deduct_on must be PAID or READY")
         old = svc.get_setting(db, key)
         svc.set_setting(db, key, value)
         audit(db, "settings.changed", "setting", key, staff.id, {"from": str(old), "to": str(value)}, request)

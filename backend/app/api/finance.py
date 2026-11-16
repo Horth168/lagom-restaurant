@@ -46,7 +46,7 @@ def _period(db: Session, period: str, start: date | None, end: date | None) -> t
     try:
         return resolve_period(db, period, start, end)
     except ValueError as err:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(err))
+        raise HTTPException(422, str(err))
 
 
 PERIOD = Query("month", pattern="^(" + "|".join(PRESETS) + ")$")
@@ -181,11 +181,13 @@ def export_excel(period: str = PERIOD, start: date | None = None, end: date | No
     ws2.column_dimensions["A"].width = 22
 
     ws3 = wb.create_sheet("Expenses")
+    # Text typed by staff must never run as an Excel formula (e.g. "=HYPERLINK(...)")
     ws3.append(["Date", "Category", "Description", "Currency", "Amount", "USD", "Rate"])
     for x in db.scalars(select(Expense).where(Expense.spent_on >= s, Expense.spent_on <= e).order_by(Expense.spent_on)):
         amount = x.amount_minor / 100 if x.currency == Currency.USD else x.amount_minor
         ws3.append([x.spent_on, x.category.value.title(), x.description, x.currency.value, amount,
                     _money(x.amount_usd_cents), float(x.khr_per_usd)])
+        ws3.cell(ws3.max_row, 3).data_type = "s"  # always plain text, never a formula
     ws3.column_dimensions["C"].width = 40
 
     buf = io.BytesIO()

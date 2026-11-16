@@ -159,7 +159,7 @@ def _apply_groups(p: Product, groups: list[GroupIn]) -> None:
             o.sort_order = oi
             new_opts.append(o)
         if gin.selection == OptionSelection.SINGLE and sum(o.is_default for o in new_opts) > 1:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"'{gin.name_en}' can have only one default choice.")
+            raise HTTPException(422, f"'{gin.name_en}' can have only one default choice.")
         g.options = new_opts
         keep.append(g)
     p.option_groups = keep
@@ -207,7 +207,7 @@ def update_category(category_id: int, body: CategoryUpdate, request: Request, db
 def create_product(body: ProductIn, request: Request, db: Session = Depends(get_db),
                    staff: CurrentStaff = Depends(require("menu.edit"))):
     if not db.get(Category, body.category_id):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Choose a category.")
+        raise HTTPException(422, "Choose a category.")
     data = body.model_dump(exclude={"option_groups"})
     p = Product(**data)
     db.add(p)
@@ -224,7 +224,7 @@ def update_product(product_id: int, body: ProductUpdate, request: Request, db: S
     p = _load_product(db, product_id)
     changes = body.model_dump(exclude_unset=True, exclude={"option_groups"})
     if "category_id" in changes and not db.get(Category, changes["category_id"]):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Choose a category.")
+        raise HTTPException(422, "Choose a category.")
     details = {}
     for k, v in changes.items():
         if getattr(p, k) != v:
@@ -250,7 +250,7 @@ async def upload_photo(product_id: int, request: Request, file: UploadFile = Fil
 
         url = await run_in_threadpool(save_product_photo, data)
     except UploadProblem as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(e))
+        raise HTTPException(422, str(e))
     p.image_url, p.image_credit, p.image_source_url = url, "", ""
     audit(db, "menu.photo_changed", "product", p.id, staff.id, request=request)
     db.commit()

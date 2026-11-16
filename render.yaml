@@ -1,0 +1,61 @@
+# Render Blueprint for the LAGOM backend (API, live updates, payment listener).
+# In Render: New + → Blueprint → choose this repository. See docs/DEPLOYMENT.md.
+#
+# Keep exactly ONE instance: login limits, live updates and the ABA payment listener
+# run inside this one server. The "starter" plan never sleeps; the free plan sleeps
+# after 15 minutes without visitors, and while asleep KHQR payments are NOT confirmed.
+services:
+  - type: web
+    name: lagom-api
+    runtime: python
+    plan: starter
+    region: singapore # closest Render region to Cambodia
+    rootDir: backend
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    # Update the database tables first, then start the server
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.5"
+      - key: ENVIRONMENT
+        value: production
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      # Values below are typed in Render's dashboard (never stored in Git)
+      - key: DATABASE_URL # Neon PostgreSQL connection string
+        sync: false
+      - key: FRONTEND_URL # e.g. https://order.lagom.example
+        sync: false
+      - key: BACKEND_URL # e.g. https://api.lagom.example
+        sync: false
+      - key: CORS_ORIGINS # same as FRONTEND_URL
+        sync: false
+      - key: KHQR_TEMPLATE
+        sync: false
+      - key: PAYWAY_CHAT_ID
+        sync: false
+      - key: TG_LISTENER_API_ID
+        sync: false
+      - key: TG_LISTENER_API_HASH
+        sync: false
+      - key: TG_LISTENER_SESSION
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false

@@ -57,19 +57,19 @@ def create_pos_order(body: PosOrderIn, request: Request, db: Session = Depends(g
     if (body.discount_usd_cents or body.discount_percent) and not staff.can("orders.discount"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not allowed to give discounts.")
     if (body.discount_usd_cents or body.discount_percent) and not body.discount_reason.strip():
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Please give a reason for the discount.")
+        raise HTTPException(422, "Please give a reason for the discount.")
     table = None
     if body.channel == OrderChannel.POS_DINE_IN:
         table = db.get(DiningTable, body.table_id)
         if not table or not table.is_active:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Choose an active table.")
+            raise HTTPException(422, "Choose an active table.")
     try:
         priced = price_cart(db, CartIn(items=body.items))
     except PricingError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"message": e.message, "line": e.line, "code": e.code})
+        raise HTTPException(422, {"message": e.message, "line": e.line, "code": e.code})
     discount = body.discount_usd_cents or round(priced.subtotal_usd_cents * body.discount_percent / 100)
     if discount > priced.subtotal_usd_cents:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "The discount is larger than the order.")
+        raise HTTPException(422, "The discount is larger than the order.")
     order = create_order(
         db, priced, channel=body.channel, table_id=table.id if table else None, table_label=table.label if table else "",
         idempotency_key=body.idempotency_key, customer_note=body.customer_note, created_by_user_id=staff.id,
@@ -94,7 +94,7 @@ def pos_khqr(public_id: str, body: KhqrIn, db: Session = Depends(get_db),
     if not order:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found.")
     if body.currency.value not in app_settings.get_setting(db, "accepted_payment_currencies"):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "This currency is not accepted.")
+        raise HTTPException(422, "This currency is not accepted.")
     try:
         p = start_payment(db, order, "khqr", body.currency)
     except PaymentProblem as e:

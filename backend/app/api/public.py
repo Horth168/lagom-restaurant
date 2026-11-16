@@ -155,7 +155,7 @@ def quote(cart: CartIn, db: Session = Depends(get_db)):
     try:
         priced = price_cart(db, cart)
     except PricingError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"message": e.message, "line": e.line, "code": e.code})
+        raise HTTPException(422, {"message": e.message, "line": e.line, "code": e.code})
     display = app_settings.get_setting(db, "display_currency")
     return {
         "lines": [

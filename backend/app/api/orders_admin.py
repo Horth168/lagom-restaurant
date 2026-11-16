@@ -187,7 +187,7 @@ def get_dashboard(
     try:
         s, e = resolve_period(db, period, start, end)
     except ValueError as err:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(err))
+        raise HTTPException(422, str(err))
     data = dashboard(db, s, e)
     data["server_time"] = utcnow()
     return data

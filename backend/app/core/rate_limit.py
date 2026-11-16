@@ -39,10 +39,20 @@ limiter = RateLimiter()
 
 
 def client_ip(request: Request) -> str:
-    # Render / Cloudflare put the real client IP in X-Forwarded-For
+    """The visitor's real IP address, used for rate limits and the audit log.
+
+    X-Forwarded-For can be typed by anyone, so only the entries added by our own
+    hosting proxies are trusted: with TRUSTED_PROXY_HOPS=1 (one proxy, e.g. Render)
+    we take the LAST entry, which that proxy wrote. With 0 the header is ignored.
+    """
+    from app.config import get_settings
+
+    hops = get_settings().trusted_proxy_hops
     fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
+    if hops > 0 and fwd:
+        parts = [p.strip() for p in fwd.split(",") if p.strip()]
+        if parts:
+            return parts[-hops] if len(parts) >= hops else parts[0]
     return request.client.host if request.client else "unknown"
 
 

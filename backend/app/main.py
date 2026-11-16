@@ -56,6 +56,9 @@ async def lifespan(app: FastAPI):
     hub.bind_loop(asyncio.get_running_loop())  # live updates are sent from this event loop
     if s.khqr_test_mode:
         log.warning("KHQR TEST MODE IS ON - development only, payments can be faked")
+    if s.is_production and not (s.r2_bucket and s.r2_access_key_id):
+        log.warning("Cloudflare R2 is not set up: uploaded menu photos are saved on this server's disk "
+                    "and are LOST on every redeploy. See docs/DEPLOYMENT.md step 4.")
     task = None
     if s.environment != "test":
         task = asyncio.create_task(_expiry_loop())
@@ -93,6 +96,8 @@ def create_app() -> FastAPI:
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("X-Frame-Options", "DENY")
+        if s.is_production:  # browsers must always use https for this site
+            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
 
     # Error messages in the user's language (see app/i18n.py)

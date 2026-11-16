@@ -112,7 +112,7 @@ def checkout(body: CheckoutIn, db: Session = Depends(get_db), session: TableSess
     try:
         priced = price_cart(db, CartIn(items=body.items))
     except PricingError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"message": e.message, "line": e.line, "code": e.code})
+        raise HTTPException(422, {"message": e.message, "line": e.line, "code": e.code})
     channel = OrderChannel.QR if session.table_id else OrderChannel.TELEGRAM  # Telegram Mini App = pickup
     order = create_order(db, priced, channel=channel, session=session, idempotency_key=body.idempotency_key,
                          customer_note=body.customer_note, language=body.language)
@@ -127,7 +127,7 @@ def pay(public_id: str, body: PayIn, db: Session = Depends(get_db),
     """Choose KHQR (pay now with any Cambodian bank app) or cash at the counter."""
     order = _own_order(db, session, public_id)
     if body.currency.value not in app_settings.get_setting(db, "accepted_payment_currencies"):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "This currency is not accepted.")
+        raise HTTPException(422, "This currency is not accepted.")
     try:
         start_payment(db, order, body.method, body.currency)
     except PaymentProblem as e:
