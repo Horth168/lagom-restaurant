@@ -39,6 +39,31 @@ def _send(text: str) -> None:
         log.warning("Telegram send failed: %s", e.__class__.__name__)
 
 
+def send_now(text: str, chat_id: str | None = None) -> tuple[bool, str]:
+    """Send and wait for Telegram's answer (used by the 'send test message' button)."""
+    s = get_settings()
+    if sent_log is not None:
+        sent_log.append(text)
+        return True, ""
+    try:
+        r = httpx.post(f"https://api.telegram.org/bot{s.telegram_bot_token}/sendMessage",
+                       json={"chat_id": chat_id or s.telegram_chat_id, "text": text, "parse_mode": "HTML"}, timeout=15)
+        data = r.json()
+    except (httpx.HTTPError, ValueError) as e:
+        return False, e.__class__.__name__
+    return bool(data.get("ok")), str(data.get("description", ""))[:200]
+
+
+def send_to_user(user_id: str, text: str) -> None:
+    """Message one Telegram user (e.g. 'your order is ready'). Background, never raises."""
+    if sent_log is not None:
+        sent_log.append(f"to {user_id}: {text}")
+        return
+    if not get_settings().telegram_bot_token:
+        return
+    threading.Thread(target=lambda: send_now(text, chat_id=user_id), daemon=True).start()
+
+
 def notify(text: str) -> None:
     if sent_log is not None:
         sent_log.append(text)

@@ -81,7 +81,7 @@ def create_order(
         channel=channel,
         status=status,
         table_id=session.table_id if session else table_id,
-        table_label=session.table.label if session else table_label,
+        table_label=session.place_label if session else table_label,
         table_session_id=session.id if session else None,
         created_by_user_id=created_by_user_id,
         idempotency_key=idempotency_key,

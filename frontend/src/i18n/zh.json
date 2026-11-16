@@ -513,5 +513,19 @@
   "audit.when": "时间",
   "audit.who": "人员",
   "audit.what": "操作",
-  "audit.details": "详情"
+  "audit.details": "详情",
+  "offline.banner": "您已离线。这是手机上保存的菜单；下单和付款需要联网。",
+  "entry.telegram": "请从我们的 Telegram 机器人打开 LAGOM 下单自取。",
+  "track.pickup": "柜台自取",
+  "admin.settings.tgTitle": "Telegram 通知",
+  "admin.settings.tgHint": "消息会发送到员工 Telegram 群组。在 Telegram 小程序下单的顾客，在付款成功和餐点完成时也会收到消息。",
+  "admin.settings.tgNew": "新的已付款订单",
+  "admin.settings.tgFailed": "KHQR 未按时付款",
+  "admin.settings.tgCancel": "已取消的订单",
+  "admin.settings.tgLow": "库存不足",
+  "admin.settings.tgDaily": "每日汇总",
+  "admin.settings.tgTime": "每日汇总发送时间",
+  "admin.settings.tgTest": "发送测试消息",
+  "admin.settings.tgSent": "测试消息已发送，请查看 Telegram 群组。",
+  "admin.settings.tgNotSetUp": "服务器尚未设置 Telegram。请参阅 docs/TELEGRAM_SETUP.md。"
 }

@@ -73,8 +73,8 @@ To sign the listener out later: Telegram → Settings → Devices → end "LAGOM
 
 ## Step 4 (optional) — Staff notifications
 
-To receive "✅ Paid", "⚠️ two orders match" and "ℹ️ unmatched payment" messages, create a bot with
-@BotFather and set:
+To receive "🧾 New order", "⚠️ two orders match" and "ℹ️ unmatched payment" messages, create a bot
+with @BotFather and set (full guide: [TELEGRAM_SETUP.md](TELEGRAM_SETUP.md)):
 
 ```
 TELEGRAM_BOT_TOKEN=...

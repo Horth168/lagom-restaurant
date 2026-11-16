@@ -25,10 +25,21 @@ const write = (key, value) => {
   }
 }
 
-export function CustomerProvider({ qrToken, children }) {
+/** Opens a table session from a printed table QR code. */
+export const tableSession = (qrToken) => (previous, language) =>
+  api(`/api/public/tables/${encodeURIComponent(qrToken)}/session`, {
+    method: 'POST',
+    body: { previous_session_token: previous?.session_token ?? null, language },
+  })
+
+/**
+ * storageId keeps each table's (or Telegram's) cart separate on the phone.
+ * openSession(previous, language) asks the server for this phone's private session.
+ */
+export function CustomerProvider({ storageId, openSession, children }) {
   const { lang } = useI18n()
-  const sessionKey = `lagom.session.${qrToken}`
-  const cartKey = `lagom.cart.${qrToken}`
+  const sessionKey = `lagom.session.${storageId}`
+  const cartKey = `lagom.cart.${storageId}`
 
   const [session, setSession] = useState(null)
   const [menu, setMenu] = useState(null)
@@ -36,16 +47,28 @@ export function CustomerProvider({ qrToken, children }) {
   const [error, setError] = useState(null) // 'invalid' | 'offline'
   const [lines, setLines] = useState(() => read(cartKey, []))
   const [attempt, setAttempt] = useState(0)
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+
+  useEffect(() => {
+    const up = () => {
+      setOnline(true)
+      setAttempt((a) => a + 1) // reconnect the table session
+    }
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => {
+      window.removeEventListener('online', up)
+      window.removeEventListener('offline', down)
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
     setError(null)
     const previous = read(sessionKey, null)
     Promise.all([
-      api(`/api/public/tables/${encodeURIComponent(qrToken)}/session`, {
-        method: 'POST',
-        body: { previous_session_token: previous?.session_token ?? null, language: lang },
-      }),
+      openSession(previous, lang),
       api('/api/public/menu'),
       api('/api/settings/public'),
     ])
@@ -56,15 +79,30 @@ export function CustomerProvider({ qrToken, children }) {
         setMenu(m)
         setSettings(st)
       })
-      .catch((e) => {
+      .catch(async (e) => {
         if (cancelled) return
-        setError(e instanceof ApiError && e.status === 404 ? 'invalid' : 'offline')
+        if (e instanceof ApiError && [401, 404, 503].includes(e.status)) return setError(e.status === 404 ? 'invalid' : 'telegram')
+        // No internet: show the menu saved on this phone (works if this table was opened before)
+        if (previous) {
+          try {
+            const [m, st] = await Promise.all([api('/api/public/menu'), api('/api/settings/public')])
+            if (cancelled) return
+            setSession(previous)
+            setMenu(m)
+            setSettings(st)
+            setOnline(false)
+            return
+          } catch {
+            /* nothing saved yet */
+          }
+        }
+        setError('offline')
       })
     return () => {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- language changes must not open a new session
-  }, [qrToken, sessionKey, attempt])
+  }, [storageId, sessionKey, attempt])
 
   useEffect(() => write(cartKey, lines), [cartKey, lines])
 
@@ -81,12 +119,12 @@ export function CustomerProvider({ qrToken, children }) {
     const productsById = new Map((menu?.products ?? []).map((p) => [p.id, p]))
     const categoriesById = new Map((menu?.categories ?? []).map((c) => [c.id, c]))
     return {
-      qrToken, session, menu, settings, error, retry,
+      session, menu, settings, error, retry, online,
       productsById, categoriesById,
       lines, add, setQty, clear,
       headers,
     }
-  }, [qrToken, session, menu, settings, error, retry, lines, add, setQty, clear, headers])
+  }, [session, menu, settings, error, retry, online, lines, add, setQty, clear, headers])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

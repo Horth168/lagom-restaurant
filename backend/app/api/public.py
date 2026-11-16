@@ -101,7 +101,8 @@ class SessionIn(BaseModel):
 
 
 def _session_out(s: TableSession) -> dict:
-    return {"session_token": s.token, "table": {"label": s.table.label, "area": s.table.area}, "language": s.language}
+    return {"session_token": s.token, "table": {"label": s.place_label, "area": s.table.area if s.table else ""},
+            "pickup": s.table is None, "language": s.language}
 
 
 @router.post("/tables/{qr_token}/session", dependencies=[Depends(rate_limit("table-session", 30))])
@@ -135,7 +136,7 @@ def current_table_session(
     if not x_table_session:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please scan the QR code on your table.")
     s = db.scalar(select(TableSession).where(TableSession.token == x_table_session))
-    if not s or s.closed_at is not None or not s.table.is_active:
+    if not s or s.closed_at is not None or (s.table is not None and not s.table.is_active):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your table session has ended. Please scan the QR code again.")
     if utcnow() - s.last_seen_at > timedelta(hours=SESSION_IDLE_HOURS):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your table session has expired. Please scan the QR code again.")
@@ -174,3 +175,36 @@ def quote(cart: CartIn, db: Session = Depends(get_db)):
         "display_currency": display,
         "estimated_minutes": priced.estimated_minutes,
     }
+
+
+# ---------------------------------------------------------------- Telegram Mini App (optional)
+class TelegramSessionIn(BaseModel):
+    init_data: str = Field(min_length=10, max_length=4096)
+    language: str = Field("en", pattern="^(en|km|zh)$")
+
+
+@router.post("/telegram/session", dependencies=[Depends(rate_limit("telegram-session", 30))])
+def telegram_session(body: TelegramSessionIn, db: Session = Depends(get_db)):
+    """Pickup ordering inside Telegram. The login is checked with our bot token (never trusted as sent)."""
+    from app.config import get_settings
+    from app.services.telegram_auth import TelegramAuthError, validate_init_data
+
+    token = get_settings().telegram_bot_token
+    if not token:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Ordering in Telegram is not available right now.")
+    try:
+        user = validate_init_data(body.init_data, token)
+    except TelegramAuthError:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please open LAGOM again from Telegram.")
+    tg_id = str(user["id"])
+    now = utcnow()
+    s = db.scalar(select(TableSession).where(TableSession.telegram_user_id == tg_id, TableSession.table_id.is_(None),
+                                             TableSession.closed_at.is_(None)).order_by(TableSession.id.desc()))
+    if s is None or now - s.last_seen_at > timedelta(hours=SESSION_IDLE_HOURS):
+        s = TableSession(table_id=None, telegram_user_id=tg_id, language=body.language)
+        db.add(s)
+    s.guest_name = str(user.get("first_name") or user.get("username") or "")[:64]
+    s.last_seen_at = now
+    db.commit()
+    db.refresh(s)
+    return _session_out(s)

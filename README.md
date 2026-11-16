@@ -24,6 +24,7 @@ POS and the admin dashboard.
 | Address | For | What it does |
 |---|---|---|
 | `/t/<table QR code>` | Customers | Menu, order, pay (KHQR or cash), live order tracking |
+| `/tg` | Customers in Telegram | Same menu as a Telegram Mini App, for pickup at the counter |
 | `/login` | Staff | Sign in |
 | `/admin` | Owner, admin, inventory staff | Overview, orders, payments, menu, inventory, finance, tables & QR, settings |
 | `/pos` | Cashiers | Counter orders, discounts, cash or KHQR, 80 mm receipts |
@@ -37,3 +38,4 @@ POS and the admin dashboard.
 - [Kitchen display (KDS)](docs/KITCHEN_DISPLAY.md)
 - [Inventory and finance](docs/INVENTORY_AND_FINANCE.md)
 - [Staff, permissions and languages](docs/STAFF_AND_LANGUAGES.md)
+- [Telegram alerts, Mini App and installing on phones](docs/TELEGRAM_SETUP.md)

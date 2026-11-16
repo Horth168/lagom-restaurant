@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
 import { Mark } from '../../components/Logo'
 import { useI18n } from '../../i18n'
-import { CustomerProvider, useCustomer } from './CustomerContext'
+import { CustomerProvider, tableSession, useCustomer } from './CustomerContext'
 import { MenuPage } from './MenuPage'
 import { CartPage } from './CartPage'
 import { OrderPage } from './OrderPage'
@@ -9,22 +10,23 @@ import { OrdersPage } from './OrdersPage'
 
 export default function CustomerApp() {
   const { qrToken } = useParams()
+  const open = useMemo(() => tableSession(qrToken), [qrToken])
   return (
-    <CustomerProvider qrToken={qrToken}>
+    <CustomerProvider storageId={qrToken} openSession={open}>
       <Gate />
     </CustomerProvider>
   )
 }
 
-function Gate() {
-  const { session, menu, error, retry } = useCustomer()
+export function Gate() {
+  const { session, menu, error, retry, online } = useCustomer()
   const { t } = useI18n()
 
   if (error) {
     return (
       <Centered>
         <Mark size={56} className="text-brand" />
-        <p className="max-w-xs text-center text-ink">{t(error === 'invalid' ? 'entry.invalid' : 'entry.offline')}</p>
+        <p className="max-w-xs text-center text-ink">{t(`entry.${error}`)}</p>
         {error === 'offline' && (
           <button onClick={retry} className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-on-brand">
             {t('common.retry')}
@@ -36,16 +38,21 @@ function Gate() {
   if (!session || !menu) return <MenuSkeleton />
 
   return (
-    <Routes>
+    <>
+      {!online && (
+        <div role="status" className="sticky top-0 z-40 bg-ink px-4 py-2 text-center text-sm text-bg">{t('offline.banner')}</div>
+      )}
+      <Routes>
       <Route index element={<MenuPage />} />
       <Route path="cart" element={<CartPage />} />
       <Route path="orders" element={<OrdersPage />} />
       <Route path="order/:publicId" element={<OrderPage />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
 
-function Centered({ children }) {
+export function Centered({ children }) {
   return <div className="min-h-dvh flex flex-col items-center justify-center gap-6 px-6">{children}</div>
 }
 

@@ -22,9 +22,12 @@ DEFAULTS: dict[str, tuple[object, type]] = {
     "telegram_notify_cancellations": (True, bool),
     "telegram_notify_low_stock": (True, bool),
     "telegram_daily_summary": (True, bool),
+    "daily_summary_time": ("22:00", str),  # restaurant time, HH:MM
+    "daily_summary_last_sent": ("", str),  # internal: date of the last summary
     "timezone": ("Asia/Phnom_Penh", str),
 }
 
+INTERNAL_KEYS = {"daily_summary_last_sent"}  # managed by the system, not editable in Settings
 PUBLIC_KEYS = {"restaurant_name", "khr_per_usd", "display_currency", "show_secondary_currency"}
 
 

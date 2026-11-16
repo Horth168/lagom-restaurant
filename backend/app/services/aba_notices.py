@@ -162,10 +162,7 @@ def process(db: Session, text: str, received_at: datetime) -> str:
                        note=f"{money} paid by {notice.payer} {notice.account} · ABA Trx {notice.trx}".strip()):
             record.outcome = "unmatched"
             outcome = "unmatched"
-        else:
-            o = payment.order
-            tg.notify(f"✅ <b>Paid</b> · Order #{o.display_number} · {tg.esc(o.table_label)}\n"
-                      f"{money} from {who}\nABA Trx {tg.esc(notice.trx)} · sent to the kitchen")
+        # (when it matches, the "New order" Telegram alert comes from services/notifications.py)
     if outcome == "ambiguous":
         lines = "\n".join(f"• #{p.order.display_number} · {tg.esc(p.order.table_label)}" for p in found)
         tg.notify(f"⚠️ <b>{money} received from {who}</b>, but {len(found)} orders are waiting for that exact "

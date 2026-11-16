@@ -44,12 +44,21 @@ class TableSession(Base):
     __tablename__ = "table_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    table_id: Mapped[int] = mapped_column(ForeignKey("dining_tables.id"), index=True)
+    # Empty for Telegram Mini App pickup orders (no table)
+    table_id: Mapped[int | None] = mapped_column(ForeignKey("dining_tables.id"), nullable=True, index=True)
     token: Mapped[str] = mapped_column(String(64), unique=True, index=True, default=new_session_token)
     language: Mapped[str] = mapped_column(String(5), default="en")
-    telegram_user_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    telegram_user_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    guest_name: Mapped[str] = mapped_column(String(64), default="")  # Telegram first name, for pickup
     started_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
-    table: Mapped[DiningTable] = relationship(back_populates="sessions")
+    table: Mapped[DiningTable | None] = relationship(back_populates="sessions")
+
+    @property
+    def place_label(self) -> str:
+        """What staff see: the table, or 'Pickup · Dara' for Telegram orders."""
+        if self.table:
+            return self.table.label
+        return f"Pickup · {self.guest_name}"[:40] if self.guest_name else "Pickup"

@@ -513,5 +513,19 @@
   "audit.when": "When",
   "audit.who": "Who",
   "audit.what": "What",
-  "audit.details": "Details"
+  "audit.details": "Details",
+  "offline.banner": "You are offline. This is the menu saved on your phone; ordering and payment need internet.",
+  "entry.telegram": "Please open LAGOM from our Telegram bot to order for pickup.",
+  "track.pickup": "Pickup at the counter",
+  "admin.settings.tgTitle": "Telegram alerts",
+  "admin.settings.tgHint": "Messages sent to your staff Telegram group. Customers who order in the Telegram Mini App also get a message when their order is paid and ready.",
+  "admin.settings.tgNew": "New paid orders",
+  "admin.settings.tgFailed": "KHQR not paid in time",
+  "admin.settings.tgCancel": "Cancelled orders",
+  "admin.settings.tgLow": "Low stock",
+  "admin.settings.tgDaily": "Daily summary",
+  "admin.settings.tgTime": "Send daily summary at",
+  "admin.settings.tgTest": "Send test message",
+  "admin.settings.tgSent": "Test message sent. Check your Telegram group.",
+  "admin.settings.tgNotSetUp": "Telegram is not set up on the server yet. See docs/TELEGRAM_SETUP.md."
 }

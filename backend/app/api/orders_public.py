@@ -113,7 +113,8 @@ def checkout(body: CheckoutIn, db: Session = Depends(get_db), session: TableSess
         priced = price_cart(db, CartIn(items=body.items))
     except PricingError as e:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"message": e.message, "line": e.line, "code": e.code})
-    order = create_order(db, priced, channel=OrderChannel.QR, session=session, idempotency_key=body.idempotency_key,
+    channel = OrderChannel.QR if session.table_id else OrderChannel.TELEGRAM  # Telegram Mini App = pickup
+    order = create_order(db, priced, channel=channel, session=session, idempotency_key=body.idempotency_key,
                          customer_note=body.customer_note, language=body.language)
     session.last_seen_at = utcnow()
     db.commit()

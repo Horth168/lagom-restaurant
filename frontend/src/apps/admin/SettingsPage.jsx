@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Badge, Button, Card, Field, inputCls, Skeleton, useToast } from '../../components/ui'
+import { Badge, Button, Card, Field, inputBase, inputCls, Skeleton, useToast } from '../../components/ui'
 import { useI18n } from '../../i18n'
 import { useStaff } from '../../lib/staffAuth'
 import { PageTitle } from './AdminApp'
+
+const ALERTS = [
+  ['telegram_notify_new_orders', 'admin.settings.tgNew'],
+  ['telegram_notify_failed_payments', 'admin.settings.tgFailed'],
+  ['telegram_notify_cancellations', 'admin.settings.tgCancel'],
+  ['telegram_notify_low_stock', 'admin.settings.tgLow'],
+  ['telegram_daily_summary', 'admin.settings.tgDaily'],
+]
 
 export default function SettingsPage() {
   const { t } = useI18n()
@@ -23,10 +31,20 @@ export default function SettingsPage() {
       restaurant_name: f.restaurant_name, khr_per_usd: String(f.khr_per_usd), display_currency: f.display_currency,
       show_secondary_currency: f.show_secondary_currency, accepted_payment_currencies: f.accepted_payment_currencies,
       receipt_footer: f.receipt_footer, inventory_deduct_on: f.inventory_deduct_on,
+      ...Object.fromEntries(ALERTS.map(([k]) => [k, f[k]])), daily_summary_time: f.daily_summary_time,
     }
     try {
       setF(await staffApi('/api/settings', { method: 'PATCH', body }))
       toast(t('admin.saved'))
+    } catch (e) {
+      toast(e.message, 'bad')
+    }
+  }
+
+  async function sendTest() {
+    try {
+      await staffApi('/api/settings/telegram/test', { method: 'POST' })
+      toast(t('admin.settings.tgSent'))
     } catch (e) {
       toast(e.message, 'bad')
     }
@@ -75,6 +93,24 @@ export default function SettingsPage() {
               </select>
             </Field>
           </div>
+        </Card>
+        <Card title={t('admin.settings.tgTitle')} className="lg:col-span-2">
+          <p className="text-sm text-muted">{t('admin.settings.tgHint')}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {ALERTS.map(([k, label]) => (
+              <label key={k} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={!!f[k]} onChange={(e) => setF({ ...f, [k]: e.target.checked })} /> {t(label)}
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap items-end gap-4">
+            <Field label={t('admin.settings.tgTime')}>
+              <input type="time" className={`${inputBase} w-36`} value={f.daily_summary_time} disabled={!f.telegram_daily_summary}
+                onChange={(e) => setF({ ...f, daily_summary_time: e.target.value })} />
+            </Field>
+            <Button onClick={sendTest} disabled={!i.telegram_configured}>{t('admin.settings.tgTest')}</Button>
+          </div>
+          {!i.telegram_configured && <p className="mt-3 text-xs text-muted">{t('admin.settings.tgNotSetUp')}</p>}
         </Card>
         <Card title={t('admin.settings.integrations')} className="lg:col-span-2">
           <ul className="grid gap-3 text-sm sm:grid-cols-2">

@@ -80,11 +80,19 @@ def _set(item: OrderItem, status: ItemStatus) -> None:
     item.status = status
 
 
+def _tell_if_ready(db: Session, order: Order, before: OrderStatus) -> None:
+    if order.status == OrderStatus.READY and before != OrderStatus.READY:
+        from app.services.notifications import tell_customer
+
+        tell_customer(db, order, "ready")
+
+
 def station_action(db: Session, order: Order, station: Station, action: str) -> None:
     if order.status not in ACTIVE:
         raise KitchenProblem("This order is not in the kitchen queue.")
     if action not in ACTIONS:
         raise KitchenProblem("Unknown action.", 422)
+    before = order.status
     mine = [i for i in order.items if i.station == station and i.status != ItemStatus.CANCELLED]
     if not mine:
         raise KitchenProblem("This order has nothing for this station.", 404)
@@ -110,6 +118,7 @@ def station_action(db: Session, order: Order, station: Station, action: str) -> 
                 _set(i, ItemStatus.PREPARING)
     recompute(order)
     _maybe_deduct(db, order)
+    _tell_if_ready(db, order, before)
     notify_after_commit(db, order)
 
 
@@ -121,7 +130,9 @@ def item_action(db: Session, item: OrderItem, status: ItemStatus) -> None:
         raise KitchenProblem("Unknown status.", 422)
     if status == ItemStatus.SERVED and item.status != ItemStatus.READY:
         raise KitchenProblem("Mark the item ready before serving.")
+    before = order.status
     _set(item, status)
     recompute(order)
     _maybe_deduct(db, order)
+    _tell_if_ready(db, order, before)
     notify_after_commit(db, order)

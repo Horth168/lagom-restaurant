@@ -128,7 +128,12 @@ def expire_due_orders(db: Session) -> int:
     due = db.scalars(
         select(Order).where(Order.status == OrderStatus.PENDING_PAYMENT, Order.expires_at <= now).limit(200)
     ).all()
+    from app.services import notifications
+
     for order in due:
+        chose_khqr = any(p.payment_option == "khqr" and p.status == PaymentStatus.PENDING for p in order.payments)
         expire_order(db, order)
+        if chose_khqr:
+            notifications.khqr_not_paid(db, order)
     db.commit()
     return len(due)

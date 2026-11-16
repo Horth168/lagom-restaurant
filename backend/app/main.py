@@ -14,6 +14,7 @@ from sqlalchemy import text
 from app.api import (audit_log, auth, finance, inventory, kds, menu_admin, orders_admin, orders_public, payments_admin, pos,
                      public, settings, staff, tables)
 from app.services import inventory as _inventory_hooks  # noqa: F401  (deducts stock when orders are paid)
+from app.services import notifications as _notification_hooks  # noqa: F401  (Telegram alerts)
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -21,10 +22,13 @@ log = logging.getLogger("lagom")
 
 
 def _expire_once() -> int:
+    from app.services.notifications import maybe_send_daily_summary
     from app.services.payments import expire_due_orders
 
     with SessionLocal() as db:
-        return expire_due_orders(db)
+        n = expire_due_orders(db)
+        maybe_send_daily_summary(db)  # once a day, after closing time (Settings)
+        return n
 
 
 async def _expiry_loop() -> None:

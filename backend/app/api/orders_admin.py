@@ -132,6 +132,9 @@ def cancel(public_id: str, body: CancelIn, request: Request, db: Session = Depen
         raise HTTPException(status.HTTP_409_CONFLICT, str(e))
     audit(db, "order.cancelled", "order", o.id, staff.id,
           {"reason": body.reason, "refunds": [r.amount_minor for r in refunds]}, request)
+    from app.services import notifications
+
+    notifications.order_cancelled(db, o, body.reason, staff.user.full_name, len(refunds))
     notify_after_commit(db, o)
     db.commit()
     return order_detail(db, o)

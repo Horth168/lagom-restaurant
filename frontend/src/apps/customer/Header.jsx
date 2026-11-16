@@ -27,7 +27,7 @@ export function Header({ title, backTo }) {
         <div className="ml-auto flex items-center gap-1">
           <span className="mr-1 inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink">
             <MapPin size={13} className="text-accent" />
-            {session?.table.label}
+            {session?.pickup ? t('track.pickup') : session?.table.label}
           </span>
           {!backTo && (
             <Link to="orders" className="grid size-9 place-items-center rounded-full text-ink hover:bg-surface-2" aria-label={t('orders.title')}>

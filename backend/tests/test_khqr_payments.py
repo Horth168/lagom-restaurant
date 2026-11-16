@@ -113,7 +113,7 @@ def test_khqr_order_paid_from_aba_notice(client, seeded, khqr_on):
         assert aba_notices.handle(db, _aba(_paid_text())) == "matched"
     after = client.get(f"/api/public/orders/{o['public_id']}", headers=h).json()
     assert after["status"] == "PAID" and after["payment"]["reference"] == "179468810879402"
-    assert any("Paid" in m for m in khqr_on)
+    assert any("New order" in m and "179468810879402" in m for m in khqr_on)  # staff alert with the ABA Trx
 
 
 def test_same_aba_transaction_cannot_pay_twice(client, seeded, khqr_on):

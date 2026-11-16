@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal, InvalidOperation
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -27,7 +28,7 @@ def public_settings(db: Session = Depends(get_db)):
 def read_settings(db: Session = Depends(get_db), _: CurrentStaff = Depends(require("settings.edit"))):
     s = get_settings()
     return {
-        "settings": _jsonable(svc.all_settings(db)),
+        "settings": _jsonable({k: v for k, v in svc.all_settings(db).items() if k not in svc.INTERNAL_KEYS}),
         # Integration status only – secret values are never sent to the browser
         "integrations": {
             "khqr_configured": s.khqr_enabled,
@@ -48,7 +49,7 @@ def update_settings(
     staff: CurrentStaff = Depends(require("settings.edit")),
 ):
     for key, value in body.items():
-        if key not in svc.DEFAULTS:
+        if key not in svc.DEFAULTS or key in svc.INTERNAL_KEYS:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown setting: {key}")
         _, typ = svc.DEFAULTS[key]
         if typ is Decimal:
@@ -64,6 +65,8 @@ def update_settings(
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be text")
         elif typ is list and not isinstance(value, list):
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{key} must be a list")
+        if key == "daily_summary_time" and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", value):
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Use a time like 22:00")
         if key == "display_currency" and value not in ("USD", "KHR"):
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "display_currency must be USD or KHR")
         if key == "inventory_deduct_on" and value not in ("PAID", "READY"):
@@ -73,3 +76,18 @@ def update_settings(
         audit(db, "settings.changed", "setting", key, staff.id, {"from": str(old), "to": str(value)}, request)
     db.commit()
     return _jsonable(svc.all_settings(db))
+
+
+@router.post("/telegram/test")
+def telegram_test(request: Request, db: Session = Depends(get_db), staff: CurrentStaff = Depends(require("settings.edit"))):
+    """Send a test message to the staff Telegram chat and say whether it arrived."""
+    from app.services import telegram as tg
+
+    if not tg.enabled():
+        raise HTTPException(status.HTTP_409_CONFLICT, "Telegram is not set up on the server yet.")
+    ok, error = tg.send_now(f"✅ LAGOM test message from {tg.esc(staff.user.full_name)}. Staff alerts will arrive here.")
+    audit(db, "settings.telegram_test", "setting", "telegram", staff.id, {"ok": ok}, request)
+    db.commit()
+    if not ok:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Telegram did not accept the message: {error}")
+    return {"sent": True}

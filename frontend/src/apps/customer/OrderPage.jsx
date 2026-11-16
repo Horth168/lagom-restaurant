@@ -334,7 +334,7 @@ function TrackingView({ order }) {
           {cancelled ? t('track.cancelled') : order.status === 'READY' ? t('track.ready') : order.status === 'SERVED' ? t('track.served') : t('track.thanks')}
         </h1>
         <p className="mt-2 font-display text-6xl tracking-tight text-accent">#{order.number}</p>
-        <p className="mt-1 text-sm text-muted">{t('track.table')} · {order.table}</p>
+        <p className="mt-1 text-sm text-muted">{order.channel === 'TELEGRAM' ? t('track.pickup') : `${t('track.table')} · ${order.table}`}</p>
         {!cancelled && current < 3 && (
           <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted">
             <Clock size={14} /> {t('track.estimate', { n: order.estimated_ready_minutes })}

@@ -6,6 +6,7 @@ import { RequireStaff, StaffAuthProvider } from './lib/staffAuth'
 
 // Each section is loaded only when needed, so customers' phones download only the customer app
 const CustomerApp = lazy(() => import('./apps/customer/CustomerApp'))
+const TelegramApp = lazy(() => import('./apps/customer/TelegramApp'))
 const LoginPage = lazy(() => import('./apps/staff/LoginPage'))
 const KdsApp = lazy(() => import('./apps/kds/KdsApp'))
 const AdminApp = lazy(() => import('./apps/admin/AdminApp'))
@@ -19,6 +20,7 @@ export default function App() {
           <Suspense fallback={<div className="min-h-dvh" />}>
             <Routes>
               <Route path="/t/:qrToken/*" element={<CustomerApp />} />
+              <Route path="/tg/*" element={<TelegramApp />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/kds/*" element={<RequireStaff><KdsApp /></RequireStaff>} />
               <Route path="/admin/*" element={<RequireStaff><AdminApp /></RequireStaff>} />

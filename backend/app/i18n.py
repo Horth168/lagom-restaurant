@@ -76,6 +76,10 @@ MESSAGES: dict[str, tuple[str, str]] = {
     "That option does not belong to this product.": ("ជម្រើសនោះមិនមែនសម្រាប់មុខម្ហូបនេះទេ។", "该选项不属于此商品。"),
     "Choose a period of one year or less.": ("សូមជ្រើសរយៈពេលមួយឆ្នាំ ឬតិចជាងនេះ។", "请选择一年或更短的期间。"),
     "No active tables to print.": ("គ្មានតុដែលកំពុងប្រើសម្រាប់បោះពុម្ពទេ។", "没有可打印的餐桌。"),
+    "Telegram is not set up on the server yet.": ("Telegram មិនទាន់បានកំណត់នៅលើម៉ាស៊ីនមេនៅឡើយទេ។", "服务器尚未设置 Telegram。"),
+    "Use a time like 22:00": ("សូមប្រើម៉ោងដូចជា 22:00", "请使用类似 22:00 的时间格式"),
+    "Ordering in Telegram is not available right now.": ("ការកុម្ម៉ង់តាម Telegram មិនអាចប្រើបានពេលនេះទេ។", "暂时无法在 Telegram 中下单。"),
+    "Please open LAGOM again from Telegram.": ("សូមបើក LAGOM ម្តងទៀតពី Telegram។", "请从 Telegram 重新打开 LAGOM。"),
 }
 
 # Messages that contain a product/option/group name: translated without the name

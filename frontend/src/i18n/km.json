@@ -513,5 +513,19 @@
   "audit.when": "ពេលណា",
   "audit.who": "អ្នកណា",
   "audit.what": "អ្វី",
-  "audit.details": "ព័ត៌មានលម្អិត"
+  "audit.details": "ព័ត៌មានលម្អិត",
+  "offline.banner": "អ្នកមិនមានអ៊ីនធឺណិត។ នេះជាម៉ឺនុយដែលរក្សាទុកនៅលើទូរស័ព្ទ។ ការកុម្ម៉ង់ និងការបង់ប្រាក់ត្រូវការអ៊ីនធឺណិត។",
+  "entry.telegram": "សូមបើក LAGOM ពី Telegram bot របស់យើង ដើម្បីកុម្ម៉ង់មកយក។",
+  "track.pickup": "មកយកនៅបញ្ជរ",
+  "admin.settings.tgTitle": "ការជូនដំណឹង Telegram",
+  "admin.settings.tgHint": "សារផ្ញើទៅក្រុម Telegram របស់បុគ្គលិក។ អតិថិជនដែលកុម្ម៉ង់ក្នុង Telegram Mini App ក៏ទទួលសារពេលបង់ប្រាក់ និងពេលរួចរាល់ដែរ។",
+  "admin.settings.tgNew": "ការកុម្ម៉ង់ថ្មីដែលបានបង់",
+  "admin.settings.tgFailed": "KHQR មិនបានបង់ទាន់ពេល",
+  "admin.settings.tgCancel": "ការកុម្ម៉ង់ដែលបានលុបចោល",
+  "admin.settings.tgLow": "ស្តុកជិតអស់",
+  "admin.settings.tgDaily": "សេចក្តីសង្ខេបប្រចាំថ្ងៃ",
+  "admin.settings.tgTime": "ផ្ញើសេចក្តីសង្ខេបនៅម៉ោង",
+  "admin.settings.tgTest": "ផ្ញើសារសាកល្បង",
+  "admin.settings.tgSent": "បានផ្ញើសារសាកល្បង។ សូមពិនិត្យក្រុម Telegram។",
+  "admin.settings.tgNotSetUp": "Telegram មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនៅឡើយ។ មើល docs/TELEGRAM_SETUP.md។"
 }

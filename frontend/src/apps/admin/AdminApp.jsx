@@ -50,9 +50,9 @@ export default function AdminApp() {
       <Shell items={allowed}>
         <Suspense fallback={<div className="p-8"><div className="skeleton h-40 rounded-xl" /></div>}>
           <Routes>
-            <Route index element={<Navigate to={allowed[0].to} replace />} />
+            <Route index element={<Navigate to={`/admin/${allowed[0].to}`} replace />} />
             {allowed.map((n) => <Route key={n.to} path={`${n.to}/*`} element={n.el} />)}
-            <Route path="*" element={<Navigate to={allowed[0].to} replace />} />
+            <Route path="*" element={<Navigate to={`/admin/${allowed[0].to}`} replace />} />
           </Routes>
         </Suspense>
       </Shell>
