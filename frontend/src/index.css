@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+
+/* ---- LAGOM design tokens ----------------------------------------------- */
+:root {
+  --forest: #263d31;
+  --cream: #f3ebdd;
+  --sand: #b18b62;
+  --gold: #c58b50;
+  --olive: #7c8860;
+
+  --bg: #faf6ef;
+  --surface: #fffdf9;
+  --surface-2: #f3ebdd;
+  --ink: #1f2f26;
+  --muted: #6b7268;
+  --line: #e6dccb;
+  --brand: #263d31;
+  --on-brand: #f3ebdd;
+  --accent: #b97c43; /* gold, darkened for text contrast on light backgrounds */
+  --danger: #a2402f;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #121a15;
+    --surface: #1a241e;
+    --surface-2: #223029;
+    --ink: #f3ebdd;
+    --muted: #a9b0a4;
+    --line: #2e3b33;
+    --brand: #f3ebdd;
+    --on-brand: #1a241e;
+    --accent: #d6a06a;
+    --danger: #e08a78;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #121a15;
+  --surface: #1a241e;
+  --surface-2: #223029;
+  --ink: #f3ebdd;
+  --muted: #a9b0a4;
+  --line: #2e3b33;
+  --brand: #f3ebdd;
+  --on-brand: #1a241e;
+  --accent: #d6a06a;
+  --danger: #e08a78;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-forest: var(--forest);
+  --color-cream: var(--cream);
+  --color-gold: var(--gold);
+  --color-sand: var(--sand);
+  --color-olive: var(--olive);
+
+  --font-sans: 'Inter Variable', 'Kantumruy Pro Variable', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei',
+    system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', 'Kantumruy Pro Variable', 'Songti SC', 'Noto Serif SC', Georgia, serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+/* Khmer script needs more line height to fit its stacked vowels */
+:lang(km) {
+  line-height: 1.7;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.animate-sheet-up { animation: sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+.animate-fade-in { animation: fade-in 200ms ease-out; }
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-up, .animate-fade-in, .skeleton { animation: none; }
+}

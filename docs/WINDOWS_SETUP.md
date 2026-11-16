@@ -40,7 +40,31 @@ If PowerShell says running scripts is disabled, run this once and answer `Y`:
 
 Open http://localhost:8000/docs to see and try every API endpoint.
 
-## 4. Create the real owner account
+## 4. Start the frontend (customer app)
+
+Open a **second** PowerShell window (keep the backend running in the first one):
+
+```powershell
+cd $HOME\Desktop\lagom-restaurant\frontend
+npm install        # first time only
+npm run dev        # starts http://localhost:5173
+```
+
+To open a table's menu you need that table's QR link. After seeding demo data,
+sign in to the API docs at http://localhost:8000/docs as the owner, call
+`GET /api/admin/tables`, and open one of the `qr_url` links. You can also
+download the printable QR cards from `GET /api/admin/tables/cards.pdf`.
+(A table-management screen arrives with the admin dashboard.)
+
+Other frontend commands:
+
+```powershell
+npm test           # run frontend tests
+npm run build      # build the production version into dist/
+npm run icons      # rebuild app icons after changing the logo files in brand/
+```
+
+## 5. Create the real owner account
 
 ```powershell
 python -m scripts.create_owner
@@ -49,7 +73,7 @@ python -m scripts.create_owner
 It asks for your email, name and password (at least 10 characters, with upper-
 and lower-case letters and a number).
 
-## 5. Run the automated tests
+## 6. Run the automated tests
 
 ```powershell
 pytest

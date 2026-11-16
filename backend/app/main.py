@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, settings, staff
+from app.api import auth, public, settings, staff, tables
 from app.config import get_settings
 from app.db import engine
 
@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
             conn.execute(text("SELECT 1"))
         return {"status": "ok", "environment": s.environment}
 
-    for r in (auth.router, staff.router, settings.router):
+    for r in (auth.router, staff.router, settings.router, public.router, tables.router):
         app.include_router(r)
     return app
 

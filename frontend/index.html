@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>LAGOM · Just the right amount.</title>
+    <meta name="description" content="LAGOM — Food · Drinks · Moments. Order and pay from your table." />
+    <meta name="theme-color" content="#F3EBDD" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141C17" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <script>
+      // Apply the saved theme before the page paints (avoids a white flash in dark mode)
+      try {
+        const t = localStorage.getItem('lagom.theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
