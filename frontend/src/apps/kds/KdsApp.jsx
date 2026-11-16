@@ -142,41 +142,53 @@ function StationScreen() {
 
   return (
     <div className="min-h-dvh bg-[#101612] text-cream" onClick={() => !soundReady && setSoundReady(true)}>
-      <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/10 bg-[#101612]/95 px-4 backdrop-blur">
-        <Mark size={30} className="text-cream" title="LAGOM" />
-        <nav className="flex gap-1.5">
-          {stations.map((s) => (
-            <Link
-              key={s}
-              to={`/kds/${s.toLowerCase()}`}
-              className={`rounded-full px-4 py-2 text-[15px] font-semibold ${s === station ? 'bg-cream text-forest' : 'text-cream/70 hover:bg-white/10'}`}
+      {/* Phone: logo + station tabs (slide sideways) on one row, tools on a second row.
+          Tablet/TV: everything on one row. Nothing is ever wider than the screen. */}
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#101612]/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur sm:px-4">
+        <div className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 py-2 sm:min-h-16">
+          <div className="flex min-w-0 basis-full items-center gap-3 sm:flex-1 sm:basis-auto">
+            <Mark size={28} className="shrink-0 text-cream" title="LAGOM" />
+            <nav className="no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto">
+              {stations.map((s) => (
+                <Link
+                  key={s}
+                  to={`/kds/${s.toLowerCase()}`}
+                  className={`press shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[15px] font-semibold ${s === station ? 'bg-cream text-forest' : 'text-cream/70 hover:bg-white/10'}`}
+                >
+                  {t(`kds.station.${s}`)}
+                </Link>
+              ))}
+            </nav>
+            <span className="hidden shrink-0 text-sm whitespace-nowrap text-cream/60 tabular-nums lg:inline">{t('kds.active', { n: active.length })}</span>
+          </div>
+          <div className="flex w-full shrink-0 items-center gap-0.5 sm:ml-auto sm:w-auto sm:gap-1">
+            <span
+              title={live === 'live' ? t('kds.live') : t('kds.offline')}
+              className={`mr-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold sm:mr-1 ${live === 'live' ? 'bg-olive/30 text-[#c9d6a8]' : 'bg-[#E1232E]/25 text-[#ffb3b3]'}`}
             >
-              {t(`kds.station.${s}`)}
-            </Link>
-          ))}
-        </nav>
-        <span className="ml-2 text-sm text-cream/60 tabular-nums">{t('kds.active', { n: active.length })}</span>
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className={`mr-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${live === 'live' ? 'bg-olive/30 text-[#c9d6a8]' : 'bg-[#E1232E]/25 text-[#ffb3b3]'}`}>
-            <span className={`size-2 rounded-full ${live === 'live' ? 'bg-[#a8c27a]' : 'bg-[#ff6b6b] animate-pulse'}`} />
-            {live === 'live' ? t('kds.live') : t('kds.offline')}
-          </span>
-          <Clock />
-          <IconButton label={autoPrint ? t('kds.autoPrintOff') : t('kds.autoPrintOn')} onClick={toggleAutoPrint}>
-            <Printer size={20} className={autoPrint ? 'text-gold' : ''} />
-          </IconButton>
-          <IconButton label={muted ? t('kds.unmute') : t('kds.mute')} onClick={toggleMute}>
-            {muted ? <BellOff size={20} /> : <Bell size={20} />}
-          </IconButton>
-          <IconButton
-            label={t('kds.fullscreen')}
-            onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())}
-          >
-            {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-          </IconButton>
-          <IconButton label={`${t('kds.signOut')} (${user?.full_name ?? ''})`} onClick={logout}>
-            <LogOut size={20} />
-          </IconButton>
+              <span className={`size-2 rounded-full ${live === 'live' ? 'bg-[#a8c27a]' : 'animate-pulse bg-[#ff6b6b]'}`} />
+              {live === 'live' ? t('kds.live') : t('kds.offline')}
+              <span className="text-cream/50 sm:hidden">· {t('kds.active', { n: active.length })}</span>
+            </span>
+            <Clock />
+            <IconButton label={autoPrint ? t('kds.autoPrintOff') : t('kds.autoPrintOn')} onClick={toggleAutoPrint}>
+              <Printer size={20} className={autoPrint ? 'text-gold' : ''} />
+            </IconButton>
+            <IconButton label={muted ? t('kds.unmute') : t('kds.mute')} onClick={toggleMute}>
+              {muted ? <BellOff size={20} /> : <Bell size={20} />}
+            </IconButton>
+            {document.fullscreenEnabled && (
+              <IconButton
+                label={t('kds.fullscreen')}
+                onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())}
+              >
+                {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+              </IconButton>
+            )}
+            <IconButton label={`${t('kds.signOut')} (${user?.full_name ?? ''})`} onClick={logout}>
+              <LogOut size={20} />
+            </IconButton>
+          </div>
         </div>
       </header>
 
@@ -186,7 +198,7 @@ function StationScreen() {
         </button>
       )}
 
-      <main className="p-4">
+      <main className="p-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-4">
         {data && active.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-32 text-center text-cream/60">
             <Mark size={56} className="text-cream/40" />
@@ -194,7 +206,7 @@ function StationScreen() {
             <p className="text-sm">{t('kds.emptyHint')}</p>
           </div>
         ) : (
-          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))]">
             {active.map((o) => (
               <Ticket key={o.public_id} order={o} serverTime={data.server_time} busy={busy} onAct={act} onToggleItem={toggleItem}
                 onPrint={() => setPrintQueue((q) => [...q, o])} />
@@ -222,7 +234,7 @@ function StationScreen() {
 
 function IconButton({ label, onClick, children }) {
   return (
-    <button onClick={onClick} aria-label={label} title={label} className="grid size-11 place-items-center rounded-full text-cream/80 hover:bg-white/10">
+    <button onClick={onClick} aria-label={label} title={label} className="press grid size-10 place-items-center rounded-full text-cream/80 hover:bg-white/10 sm:size-11">
       {children}
     </button>
   )

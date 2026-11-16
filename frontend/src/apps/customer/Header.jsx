@@ -17,19 +17,22 @@ export function Header({ title, backTo }) {
 
   return (
     <header className="sticky top-0 z-30 bg-bg/90 backdrop-blur-md border-b border-line/70">
-      <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-4">
+      <div className="mx-auto flex h-14 max-w-2xl items-center gap-1.5 px-3 min-[380px]:gap-2 min-[380px]:px-4">
         {backTo ? (
           <Link to={backTo} className="-ml-2 flex items-center gap-1 rounded-full py-2 pr-3 pl-1 text-ink" aria-label={t('common.back')}>
             <ChevronLeft size={22} />
             <span className="font-display text-lg">{title}</span>
           </Link>
         ) : (
-          <LogoHorizontal height={26} className="text-brand" />
+          <span className="shrink-0 text-brand">
+            <span className="min-[380px]:hidden"><LogoHorizontal height={21} /></span>
+            <span className="hidden min-[380px]:inline"><LogoHorizontal height={26} /></span>
+          </span>
         )}
-        <div className="ml-auto flex items-center gap-1">
-          <span className="mr-1 inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink">
-            <MapPin size={13} className="text-accent" />
-            {session?.pickup ? t('track.pickup') : session?.table.label}
+        <div className="ml-auto flex min-w-0 items-center gap-0.5 min-[380px]:gap-1">
+          <span className="mr-0.5 inline-flex min-w-0 items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-ink min-[380px]:px-3">
+            <MapPin size={13} className="shrink-0 text-accent" />
+            <span className="truncate">{session?.pickup ? t('track.pickup') : session?.table.label}</span>
           </span>
           <ServiceButton />
           {!backTo && (

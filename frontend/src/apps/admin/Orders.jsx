@@ -63,7 +63,30 @@ export default function Orders() {
         ) : data.orders.length === 0 ? (
           <p className="py-12 text-center text-muted">{t('admin.orders.none')}</p>
         ) : (
-          <div className="-mx-5 overflow-x-auto">
+          <>
+          {/* Phones: one card per order */}
+          <ul className="-mx-1 divide-y divide-line md:hidden">
+            {data.orders.map((o) => (
+              <li key={o.public_id}>
+                <button onClick={() => setOpenId(o.public_id)} className="press flex w-full items-center gap-3 rounded-lg px-1 py-3 text-left active:bg-surface-2">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-2 text-sm font-semibold tabular-nums">#{o.number}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{o.table || t(`channel.${o.channel}`)}</span>
+                    <span className="block truncate text-xs text-muted">
+                      {new Date(o.created_at).toLocaleString(appLocale(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {' · '}{t('admin.orders.itemsN', { n: o.items_count })}
+                      {o.payment_method && <> · {t(`pay.${o.payment_method}`)}</>}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="font-semibold tabular-nums">{formatUSD(o.total_usd_cents)}</span>
+                    <Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}`)}</Badge>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="-mx-5 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-line text-xs uppercase tracking-wider text-muted">
                 <tr>
@@ -91,6 +114,7 @@ export default function Orders() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {data && pages > 1 && (
           <div className="mt-4 flex items-center justify-end gap-2 text-sm">

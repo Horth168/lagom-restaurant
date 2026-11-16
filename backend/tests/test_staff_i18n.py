@@ -114,3 +114,14 @@ def test_full_role_matrix(client, SessionTest, make_user, login):
         for role in Role:
             code = client.get(path, headers=heads[role]).status_code
             assert (code == 200) == (role in allowed), f"{role} {path} -> {code}"
+
+
+def test_audit_log_search(client, make_user, login):
+    make_user(Role.OWNER)
+    h = login("owner@test.com")
+    client.post("/api/auth/login", json={"email": "nobody@test.com", "password": "Wrong-password-1"})
+    found = client.get("/api/admin/audit?q=login_failed", headers=h).json()
+    assert found["total"] >= 1 and all("login_failed" in e["action"] for e in found["entries"])
+    by_person = client.get("/api/admin/audit?q=owner person", headers=h).json()
+    assert by_person["total"] >= 1 and all(e["user"] == "Owner Person" for e in by_person["entries"])
+    assert client.get("/api/admin/audit?q=zzz-nothing", headers=h).json()["total"] == 0

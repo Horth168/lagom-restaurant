@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { KeyRound, Plus, ShieldCheck } from 'lucide-react'
+import { KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Button, Card, Field, inputCls, Skeleton, useToast } from '../../components/ui'
 import { LANGUAGES, appLocale, useI18n } from '../../i18n'
@@ -36,19 +36,24 @@ export default function StaffPage() {
         {!rows ? <Skeleton className="h-60" /> : (
           <ul className="-my-2 divide-y divide-line">
             {rows.map((s) => (
-              <li key={s.id} className={`flex flex-wrap items-center gap-3 py-3 ${s.is_active ? '' : 'opacity-55'}`}>
-                <span className="grid size-10 place-items-center rounded-full bg-surface-2 font-semibold">{s.full_name.slice(0, 1).toUpperCase()}</span>
+              <li key={s.id} className={`flex items-center gap-3 py-3 ${s.is_active ? '' : 'opacity-55'}`}>
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-2 font-semibold">{s.full_name.slice(0, 1).toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">{s.full_name} {s.id === user?.id && <span className="text-xs text-muted">({t('staff.you')})</span>}</span>
-                  <span className="block text-sm text-muted">{s.email}</span>
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium">{s.full_name}</span>
+                    {s.id === user?.id && <span className="text-xs text-muted">({t('staff.you')})</span>}
+                    <Badge tone={s.role === 'OWNER' ? 'info' : 'neutral'}>{t(`role.${s.role}`)}</Badge>
+                    {s.extra_permissions.length > 0 && <Badge tone="warn">+{s.extra_permissions.length}</Badge>}
+                    {!s.is_active && <Badge tone="bad">{t('staff.inactive')}</Badge>}
+                  </span>
+                  <span className="block truncate text-sm text-muted">{s.email}</span>
+                  <span className="block text-xs text-muted">
+                    {s.last_login_at ? t('staff.lastSeen', { date: new Date(s.last_login_at).toLocaleDateString(appLocale(), { day: 'numeric', month: 'short', year: 'numeric' }) }) : t('staff.neverSignedIn')}
+                  </span>
                 </span>
-                <Badge tone={s.role === 'OWNER' ? 'info' : 'neutral'}>{t(`role.${s.role}`)}</Badge>
-                {s.extra_permissions.length > 0 && <Badge tone="warn">+{s.extra_permissions.length}</Badge>}
-                {!s.is_active && <Badge tone="bad">{t('staff.inactive')}</Badge>}
-                <span className="w-28 text-right text-xs text-muted">{s.last_login_at ? new Date(s.last_login_at).toLocaleDateString(appLocale()) : t('staff.neverSignedIn')}</span>
-                <span className="flex gap-1">
-                  <Button size="sm" onClick={() => setEditing(s)}>{t('inv.edit')}</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setResetting(s)} title={t('staff.resetPassword')}><KeyRound size={15} /></Button>
+                <span className="flex shrink-0 items-center gap-0.5">
+                  <button onClick={() => setEditing(s)} aria-label={t('inv.edit')} title={t('inv.edit')} className="press grid size-10 place-items-center rounded-full hover:bg-surface-2"><Pencil size={17} /></button>
+                  <button onClick={() => setResetting(s)} aria-label={t('staff.resetPassword')} title={t('staff.resetPassword')} className="press grid size-10 place-items-center rounded-full hover:bg-surface-2"><KeyRound size={17} /></button>
                 </span>
               </li>
             ))}
@@ -171,7 +176,21 @@ function MatrixSheet({ matrix, onClose }) {
     <Sheet open onClose={onClose} label={t('staff.whoCanDoWhat')}>
       <div className="p-6">
         <h2 className="font-display text-2xl">{t('staff.whoCanDoWhat')}</h2>
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 space-y-3 sm:hidden">
+          {ROLES.map((r) => (
+            <details key={r} className="group rounded-xl bg-surface-2/70 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
+                {t(`role.${r}`)} <span className="text-xs text-muted">{(matrix.roles[r] || []).length}</span>
+              </summary>
+              <ul className="mt-2 space-y-1 text-sm">
+                {Object.keys(matrix.permissions).filter((p) => matrix.roles[r]?.includes(p)).map((p) => (
+                  <li key={p} className="flex gap-2"><span className="text-series-1">●</span>{t(`perm.${p}`)}</li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </div>
+        <div className="mt-4 hidden overflow-x-auto sm:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted">

@@ -1,3 +1,4 @@
+import { Segmented } from '../../components/Segmented'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, History, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Sheet } from '../../components/Sheet'
@@ -32,14 +33,8 @@ export default function Inventory() {
   return (
     <>
       <PageTitle title={t('admin.nav.inventory')}>
-        <div className="flex gap-1 rounded-lg border border-line bg-surface p-1" role="tablist">
-          {TABS.map((x) => (
-            <button key={x} role="tab" aria-selected={tab === x} onClick={() => setTab(x)}
-              className={`rounded-md px-3 py-1.5 text-sm ${tab === x ? 'bg-brand text-on-brand' : 'hover:bg-surface-2'}`}>
-              {t(`inv.tab.${x}`)}
-            </button>
-          ))}
-        </div>
+        <Segmented label={t('admin.nav.inventory')} value={tab} onChange={setTab}
+          options={TABS.map((x) => ({ value: x, label: t(`inv.tab.${x}`) }))} />
       </PageTitle>
       {!ingredients ? <Skeleton className="h-80" /> : (
         <>
@@ -63,13 +58,38 @@ function Stock({ ingredients, suppliers, editable, reload }) {
   const low = ingredients.filter((i) => i.is_low && i.is_active)
   return (
     <>
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-3 gap-2 sm:mb-6 sm:gap-4">
         <Tile label={t('inv.stockValue')} value={formatUSD(value)} />
         <Tile label={t('inv.ingredients')} value={ingredients.filter((i) => i.is_active).length} />
         <Tile label={t('admin.lowStock')} value={low.length} warn={low.length > 0} />
       </div>
       <Card title={t('inv.tab.stock')} action={editable && <Button size="sm" variant="primary" onClick={() => setEditing({})}><Plus size={14} /> {t('inv.addIngredient')}</Button>}>
-        <div className="-mx-5 overflow-x-auto">
+        {/* Phones: one card per ingredient */}
+        <ul className="-mx-1 divide-y divide-line md:hidden">
+          {ingredients.length === 0 && <li className="py-8 text-center text-sm text-muted">{t('inv.none')}</li>}
+          {ingredients.map((i) => (
+            <li key={i.id} className={`px-1 py-3 ${i.is_active ? '' : 'opacity-50'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-medium">{i.name}</div>
+                  <div className="mt-0.5 text-xs text-muted">{unitCost(i.unit_cost_usd_millicents)} / {i.unit}{i.supplier ? ` · ${i.supplier}` : ''}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="font-semibold tabular-nums">{num(i.quantity)} {i.unit}</div>
+                  {i.is_low
+                    ? <div className="inline-flex items-center gap-1 text-xs font-semibold text-series-2"><AlertTriangle size={12} /> {t('inv.low')}</div>
+                    : <div className="text-xs tabular-nums text-muted">{formatUSD(i.stock_value_usd_cents)}</div>}
+                </div>
+              </div>
+              <div className="mt-2 flex gap-1.5">
+                {editable && <Button size="sm" onClick={() => setAdjusting(i)}>{t('inv.adjust')}</Button>}
+                <Button size="sm" variant="ghost" onClick={() => setHistory(i)} aria-label={t('inv.history')}><History size={15} /></Button>
+                {editable && <Button size="sm" variant="ghost" onClick={() => setEditing(i)} aria-label={t('inv.edit')}><Pencil size={15} /></Button>}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="-mx-5 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-line text-xs uppercase tracking-wider text-muted">
               <tr>
@@ -115,9 +135,9 @@ function Stock({ ingredients, suppliers, editable, reload }) {
 
 function Tile({ label, value, warn }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-5">
-      <div className="flex items-center gap-1.5 text-sm text-muted">{warn && <AlertTriangle size={14} className="text-series-2" />}{label}</div>
-      <div className="mt-2 font-display text-3xl tabular-nums">{value}</div>
+    <div className="min-w-0 rounded-xl border border-line bg-surface p-3 sm:p-5">
+      <div className="flex items-center gap-1 truncate text-xs text-muted sm:text-sm">{warn && <AlertTriangle size={13} className="shrink-0 text-series-2" />}<span className="truncate">{label}</span></div>
+      <div className="mt-1 font-display text-xl tabular-nums sm:mt-2 sm:text-3xl">{value}</div>
     </div>
   )
 }

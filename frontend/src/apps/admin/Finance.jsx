@@ -79,7 +79,7 @@ function Report({ qs }) {
   const money = (c) => (c < 0 ? `-${formatUSD(-c)}` : formatUSD(c))
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Tile label={t('fin.net')} value={formatUSD(r.net_sales_usd_cents)} sub={t('admin.ordersCount', { n: r.orders })} />
         <Tile label={t('fin.grossProfit')} value={money(r.gross_profit_usd_cents)} sub={r.gross_margin_percent != null ? t('fin.margin', { n: r.gross_margin_percent }) : ''} />
         <Tile label={t('fin.expenses')} value={formatUSD(r.expenses_usd_cents)} />
@@ -126,7 +126,27 @@ function Report({ qs }) {
         </div>
       </div>
       <Card title={t(`fin.group.${r.period.group}`)}>
-        <div className="-mx-5 overflow-x-auto">
+        {/* Phones: one card per period */}
+        <ul className="space-y-2.5 md:hidden">
+          {r.periods.length === 0 && <li className="py-6 text-center text-muted">{t('admin.noSales')}</li>}
+          {r.periods.map((p) => (
+            <li key={p.label} className="rounded-xl bg-surface-2/60 p-3.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-medium">{p.label}</span>
+                <span className={`text-lg font-semibold tabular-nums ${p.net_profit < 0 ? 'text-danger' : ''}`}>{money(p.net_profit)}</span>
+              </div>
+              <div className="text-right text-[11px] uppercase tracking-wider text-muted">{t('fin.netProfit')}</div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm tabular-nums">
+                {[['admin.stat.orders', p.orders], ['fin.net', formatUSD(p.net_sales)], ['fin.refunds', formatUSD(p.refunds)],
+                  ['fin.cogs', formatUSD(p.cogs)], ['fin.waste', formatUSD(p.waste)], ['fin.grossProfit', money(p.gross_profit)],
+                  ['fin.expenses', formatUSD(p.expenses)]].map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-2"><dt className="truncate text-muted">{t(k)}</dt><dd>{v}</dd></div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <div className="-mx-5 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] text-right text-sm tabular-nums">
             <thead className="border-b border-line text-xs uppercase tracking-wider text-muted">
               <tr>
@@ -159,9 +179,9 @@ function Report({ qs }) {
 
 function Tile({ label, value, sub, hero, negative }) {
   return (
-    <div className={`rounded-xl border border-line p-5 ${hero ? 'bg-forest text-cream' : 'bg-surface'}`}>
-      <div className={`text-sm ${hero ? 'text-cream/75' : 'text-muted'}`}>{label}</div>
-      <div className={`mt-2 font-display text-3xl tabular-nums ${negative ? 'text-[#ffb3a6]' : ''}`}>{value}</div>
+    <div className={`min-w-0 rounded-xl border border-line p-4 sm:p-5 ${hero ? 'col-span-2 bg-forest text-cream sm:col-span-1' : 'bg-surface'}`}>
+      <div className={`truncate text-xs sm:text-sm ${hero ? 'text-cream/75' : 'text-muted'}`}>{label}</div>
+      <div className={`mt-1.5 font-display text-2xl tabular-nums sm:mt-2 sm:text-3xl ${negative ? 'text-[#ffb3a6]' : ''}`}>{value}</div>
       {sub && <div className={`mt-1 text-xs ${hero ? 'text-cream/70' : 'text-muted'}`}>{sub}</div>}
     </div>
   )

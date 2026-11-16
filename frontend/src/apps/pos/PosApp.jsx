@@ -51,6 +51,7 @@ function Pos() {
   const [khqr, setKhqr] = useState(null)
   const [busy, setBusy] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false) // phones only: the order sheet
   const [key, setKey] = useState(newKey)
 
   useEffect(() => {
@@ -94,6 +95,7 @@ function Pos() {
   }
 
   function reset() {
+    setCartOpen(false)
     setLines([])
     setNote('')
     setDiscount(null)
@@ -116,6 +118,7 @@ function Pos() {
   }
 
   async function charge(kind) {
+    setCartOpen(false)
     setBusy(true)
     try {
       const o = await createOrder()
@@ -149,27 +152,29 @@ function Pos() {
   return (
     <div className="flex h-dvh flex-col bg-bg md:flex-row">
       {/* ---------------------------------------------------------- products */}
-      <section className="flex min-h-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <Mark size={30} className="text-brand" />
-          <label className="relative flex-1">
-            <Search size={16} className="absolute top-3 left-3 text-muted" />
-            <input className={`${inputCls} pl-9`} placeholder={t('menu.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex flex-wrap items-center gap-2 border-b border-line px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 md:flex-nowrap md:gap-3 md:px-4 md:py-3">
+          <Mark size={30} className="shrink-0 text-brand" />
+          <label className="relative order-last w-full md:order-none md:w-auto md:flex-1">
+            <Search size={16} className="pointer-events-none absolute top-3 left-3 text-muted" />
+            <input type="search" className={`${inputCls} pl-9`} placeholder={t('menu.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
-          <ShiftBar />
-          <Button variant="ghost" onClick={() => setHistoryOpen(true)} title={t('pos.history')}><History size={18} /></Button>
-          {can('dashboard.view') && <Link to="/admin" className="grid size-10 place-items-center rounded-lg hover:bg-surface-2" title={t('admin.title')}><LayoutDashboard size={18} /></Link>}
-          <Button variant="ghost" onClick={logout} title={`${t('kds.signOut')} (${user?.full_name})`}><LogOut size={18} /></Button>
+          <div className="ml-auto flex items-center gap-1 md:ml-0">
+            <ShiftBar />
+            <Button variant="ghost" onClick={() => setHistoryOpen(true)} title={t('pos.history')} aria-label={t('pos.history')} className="!px-2.5"><History size={18} /></Button>
+            {can('dashboard.view') && <Link to="/admin" className="press grid size-10 place-items-center rounded-lg hover:bg-surface-2" title={t('admin.title')} aria-label={t('admin.title')}><LayoutDashboard size={18} /></Link>}
+            <Button variant="ghost" onClick={logout} title={`${t('kds.signOut')} (${user?.full_name})`} aria-label={t('kds.signOut')} className="!px-2.5"><LogOut size={18} /></Button>
+          </div>
         </header>
         <ServiceAlerts className="border-b border-line px-4 py-2" />
-        <nav className="no-scrollbar flex gap-2 overflow-x-auto border-b border-line px-4 py-2">
+        <nav className="no-scrollbar flex gap-2 overflow-x-auto border-b border-line px-3 py-2 md:px-4">
           {[{ id: 'all', name: { en: t('pos.all') } }, ...menu.categories].map((c) => (
-            <button key={c.id} onClick={() => setCat(c.id)} className={`shrink-0 rounded-full px-4 py-2 text-sm ${cat === c.id ? 'bg-brand text-on-brand' : 'border border-line bg-surface'}`}>
+            <button key={c.id} onClick={() => setCat(c.id)} className={`press shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm ${cat === c.id ? 'bg-brand text-on-brand' : 'border border-line bg-surface'}`}>
               {pick(c.name)}
             </button>
           ))}
         </nav>
-        <div className="grid flex-1 auto-rows-min gap-3 overflow-y-auto p-4 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
+        <div className="grid flex-1 auto-rows-min gap-3 overflow-y-auto p-3 pb-24 [grid-template-columns:repeat(auto-fill,minmax(min(150px,45%),1fr))] md:p-4 md:pb-4">
           {shown.map((p) => (
             <button key={p.id} onClick={() => tapProduct(p)} disabled={!p.is_available}
               className="overflow-hidden rounded-xl border border-line bg-surface text-left transition active:scale-[0.98] disabled:opacity-45">
@@ -187,10 +192,22 @@ function Pos() {
       </section>
 
       {/* ---------------------------------------------------------- order */}
-      <aside className="flex max-h-[55dvh] w-full flex-col border-t border-line bg-surface md:max-h-none md:w-[380px] md:border-t-0 md:border-l">
+      {cartOpen && <button className="fixed inset-0 z-30 bg-black/50 animate-fade-in md:hidden" onClick={() => setCartOpen(false)} aria-label={t('common.close')} />}
+      <aside className={`flex-col bg-surface md:static md:flex md:w-[380px] md:border-l md:border-line ${
+        cartOpen
+          ? 'fixed inset-x-0 bottom-0 z-40 flex max-h-[88dvh] rounded-t-[22px] border-t border-line shadow-[0_-10px_40px_rgba(0,0,0,0.3)] animate-sheet-up md:max-h-none md:rounded-none md:border-t-0 md:shadow-none md:animate-none'
+          : 'hidden'
+      }`}>
+        <div className="flex items-center justify-between px-4 pt-3 md:hidden">
+          <span className="mx-auto mb-1 block h-1 w-10 rounded-full bg-line" aria-hidden="true" />
+        </div>
+        <div className="flex items-center justify-between px-4 md:hidden">
+          <h2 className="font-display text-xl">{t('pos.currentOrder')}</h2>
+          <button onClick={() => setCartOpen(false)} className="press grid size-9 place-items-center rounded-full bg-surface-2" aria-label={t('common.close')}><X size={18} /></button>
+        </div>
         <div className="grid grid-cols-2 gap-2 p-4 pb-2">
           {['POS_TAKEAWAY', 'POS_DINE_IN'].map((m) => (
-            <button key={m} onClick={() => setMode(m)} className={`h-10 rounded-lg text-sm font-semibold ${mode === m ? 'bg-brand text-on-brand' : 'border border-line'}`}>{t(`channel.${m}`)}</button>
+            <button key={m} onClick={() => setMode(m)} className={`press h-10 rounded-lg text-sm font-semibold ${mode === m ? 'bg-brand text-on-brand' : 'border border-line'}`}>{t(`channel.${m}`)}</button>
           ))}
         </div>
         {mode === 'POS_DINE_IN' && (
@@ -223,7 +240,7 @@ function Pos() {
             )
           })}
         </ul>
-        <div className="space-y-2 border-t border-line p-4">
+        <div className="space-y-2 border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <input className={inputCls} placeholder={t('cart.note')} value={note} onChange={(e) => setNote(e.target.value)} />
           {can('orders.discount') && (
             discount ? (
@@ -254,6 +271,18 @@ function Pos() {
           </div>
         </div>
       </aside>
+
+      {/* Phones: the order summary bar; tapping it opens the order sheet */}
+      {!cartOpen && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="press fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 flex h-14 items-center gap-3 rounded-2xl bg-brand px-4 text-on-brand shadow-[0_8px_30px_rgba(0,0,0,0.35)] md:hidden"
+        >
+          <span key={itemCount(lines)} className="grid size-8 place-items-center rounded-full bg-on-brand/15 text-sm font-bold tabular-nums animate-pop-in">{itemCount(lines)}</span>
+          <span className="font-semibold">{t('pos.viewOrder')}</span>
+          <span className="ml-auto text-lg font-semibold tabular-nums">{formatUSD(total)}</span>
+        </button>
+      )}
 
       {picking && <OptionPicker product={picking} onClose={() => setPicking(null)} onAdd={(line) => { setLines((ls) => addLine(ls, line)); setPicking(null) }} />}
 

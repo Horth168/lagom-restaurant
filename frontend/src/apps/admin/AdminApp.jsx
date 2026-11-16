@@ -1,6 +1,6 @@
 import { ThemeIcon } from '../../components/ThemeIcon'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import {
   Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Percent, QrCode, Receipt, Settings, ShoppingBag,
   ScrollText, Star, Users, UtensilsCrossed, Wallet, X,
@@ -74,6 +74,7 @@ function Shell({ items, children }) {
   const [theme, setTheme] = useState(currentTheme)
   const nextLang = LANGUAGES[(LANGUAGES.findIndex((l) => l.code === lang) + 1) % LANGUAGES.length]
   const switchTheme = (e) => setTheme(toggleTheme(e))
+  const { pathname } = useLocation()
 
   const navItem = (active) =>
     `press flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-150 ${
@@ -144,9 +145,10 @@ function Shell({ items, children }) {
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+      <main className="mx-auto max-w-7xl px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8">
         <ServiceAlerts className="mb-4" />
-        {children}
+        {/* a soft fade-in whenever you open another page */}
+        <div key={pathname.split('/')[2] || ''} className="animate-page-in">{children}</div>
       </main>
     </div>
   )
@@ -258,7 +260,7 @@ function Burger({ open }) {
 export function PageTitle({ title, children }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <h1 className="font-display text-3xl">{title}</h1>
+      <h1 className="font-display text-[28px] leading-tight sm:text-3xl">{title}</h1>
       <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{children}</div>
     </div>
   )

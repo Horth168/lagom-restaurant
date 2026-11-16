@@ -160,7 +160,36 @@ function ShiftHistory() {
   return (
     <Card title={t('shift.history')} className="mt-6">
       {rows.length === 0 ? <p className="text-sm text-muted">{t('shift.none')}</p> : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Phones: one card per shift */}
+        <ul className="space-y-2.5 md:hidden">
+          {rows.map((s) => {
+            const du = s.difference_usd_cents
+            const dk = s.difference_khr
+            const ok = du === 0 && dk === 0
+            return (
+              <li key={s.id} className="rounded-xl bg-surface-2/60 p-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium">{s.closed_by || s.opened_by}</div>
+                    <div className="text-xs text-muted">{when(s.opened_at)}{s.closed_at ? ` → ${new Date(s.closed_at).toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
+                  </div>
+                  {s.status === 'OPEN' ? <Badge tone="info">{t('shift.stillOpen')}</Badge> : (
+                    <span className={`shrink-0 font-semibold tabular-nums ${ok ? 'text-series-1' : 'text-danger'}`}>
+                      {ok ? '✓' : `${du >= 0 ? '+' : '−'}${formatUSD(Math.abs(du))}`}
+                    </span>
+                  )}
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 text-sm tabular-nums">
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{t('shift.expected')}</dt><dd>{formatUSD(s.expected_usd_cents)}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{t('shift.counted')}</dt><dd>{s.status === 'OPEN' ? '—' : formatUSD(s.counted_usd_cents)}</dd></div>
+                </dl>
+                {s.note && <p className="mt-1.5 text-xs text-muted">“{s.note}”</p>}
+              </li>
+            )
+          })}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-left text-muted">
@@ -190,6 +219,7 @@ function ShiftHistory() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </Card>
   )

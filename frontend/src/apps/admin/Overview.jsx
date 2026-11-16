@@ -52,10 +52,10 @@ export default function Overview() {
 
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {!data ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Stat label={t('admin.stat.revenue')} value={formatUSD(data.revenue_usd_cents)} hero />
             <Stat label={t('admin.stat.orders')} value={data.orders} />
             <Stat label={t('admin.stat.average')} value={formatUSD(data.average_order_usd_cents)} />
@@ -117,9 +117,9 @@ export default function Overview() {
 
 function Stat({ label, value, hero }) {
   return (
-    <div className={`rounded-xl border border-line p-5 ${hero ? 'bg-forest text-cream' : 'bg-surface'}`}>
-      <div className={`text-sm ${hero ? 'text-cream/75' : 'text-muted'}`}>{label}</div>
-      <div className={`mt-2 font-display tabular-nums ${hero ? 'text-4xl' : 'text-3xl'}`}>{value}</div>
+    <div className={`min-w-0 rounded-xl border border-line p-4 transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] sm:p-5 ${hero ? 'col-span-2 bg-forest text-cream sm:col-span-1' : 'bg-surface'}`}>
+      <div className={`truncate text-xs sm:text-sm ${hero ? 'text-cream/75' : 'text-muted'}`}>{label}</div>
+      <div className={`mt-1.5 font-display tabular-nums sm:mt-2 ${hero ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'}`}>{value}</div>
     </div>
   )
 }
