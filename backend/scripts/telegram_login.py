@@ -36,14 +36,30 @@ async def main() -> None:
     me = await client.get_me()
     print(f"\nSigned in as {me.first_name} (@{me.username or '-'})\n")
 
-    print("Groups this account is in:")
-    groups = []
-    async for d in client.iter_dialogs():
-        if d.is_group:
-            groups.append(d)
-            print(f"  {len(groups)}. {d.name}  (id {d.id})")
-    choice = input("\nNumber of the group where ABA's PayWay bot posts payments: ").strip()
-    group = groups[int(choice) - 1]
+    groups = [d async for d in client.iter_dialogs() if d.is_group]
+    print(f"This account is in {len(groups)} groups.")
+    group = None
+    while group is None:
+        # Type the group's name (or part of it); a number picks from the last list shown
+        choice = input("\nName of the group where ABA's PayWay bot posts payments (e.g. LAGOM Payment): ").strip()
+        if not choice:
+            continue
+        found = [d for d in groups if choice.lower() in (d.name or "").lower()]
+        if len(found) == 1:
+            group = found[0]
+        elif not found:
+            print("No group with that name. Check the spelling, or make sure this account is in the group.")
+        else:
+            exact = [d for d in found if (d.name or "").lower() == choice.lower()]
+            if len(exact) == 1:
+                group = exact[0]
+                continue
+            for i, d in enumerate(found[:20], 1):
+                print(f"  {i}. {d.name}  (id {d.id})")
+            pick = input("Several groups match. Type the number from this list: ").strip()
+            if pick.isdigit() and 1 <= int(pick) <= min(len(found), 20):
+                group = found[int(pick) - 1]
+    print(f"Selected: {group.name}")
     payway = 0
     async for m in client.iter_messages(group, limit=20):
         sender = await m.get_sender()
