@@ -1,5 +1,5 @@
 import { ThemeIcon } from '../../components/ThemeIcon'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import {
   Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Percent, QrCode, Receipt, Settings, ShoppingBag,
@@ -72,62 +72,51 @@ function Shell({ items, children }) {
   const [account, setAccount] = useState(false)
   const [open, setOpen] = useState(false)
   const [theme, setTheme] = useState(currentTheme)
-
-  // Mobile menu: Escape closes it, and the page behind does not scroll while it is open
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e) => e.key === 'Escape' && setOpen(false)
-    const before = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = before
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [open])
   const nextLang = LANGUAGES[(LANGUAGES.findIndex((l) => l.code === lang) + 1) % LANGUAGES.length]
+  const switchTheme = (e) => setTheme(toggleTheme(e))
+
+  const navItem = (active) =>
+    `press flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-150 ${
+      active ? 'bg-nav-active font-semibold text-cream' : 'text-cream/75 hover:bg-nav-hover hover:text-cream'
+    }`
 
   const sidebar = (
-    <nav className="flex h-full flex-col bg-forest text-cream">
-      <div className="flex h-16 items-center justify-between px-5">
+    <nav className="flex h-full flex-col bg-nav text-cream transition-colors duration-300">
+      <div className="flex h-16 shrink-0 items-center justify-between px-5">
         <LogoHorizontal height={26} className="text-cream" />
-        <button className="lg:hidden" onClick={() => setOpen(false)} aria-label={t('common.close')}><X size={20} /></button>
+        <button className="press -mr-2 grid size-10 place-items-center rounded-full hover:bg-nav-hover lg:hidden" onClick={() => setOpen(false)} aria-label={t('common.close')}>
+          <X size={20} />
+        </button>
       </div>
-      <ul className="flex-1 space-y-0.5 px-3 py-2">
+      <ul className="no-scrollbar flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 py-2">
         {items.map((n) => (
           <li key={n.to}>
-            <NavLink
-              to={`/admin/${n.to}`}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] ${isActive ? 'bg-cream/15 font-semibold text-cream' : 'text-cream/75 hover:bg-cream/10'}`
-              }
-            >
+            <NavLink to={`/admin/${n.to}`} onClick={() => setOpen(false)} className={({ isActive }) => navItem(isActive)}>
               <n.icon size={18} strokeWidth={1.75} /> {t(n.label)}
             </NavLink>
           </li>
         ))}
-        <li className="pt-4 text-[11px] font-semibold uppercase tracking-wider text-cream/45 px-3">{t('admin.nav.screens')}</li>
+        <li className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-cream/45">{t('admin.nav.screens')}</li>
         {can('orders.create') && (
-          <li><Link to="/pos" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] text-cream/75 hover:bg-cream/10"><ShoppingBag size={18} strokeWidth={1.75} /> POS</Link></li>
+          <li><Link to="/pos" className={navItem(false)}><ShoppingBag size={18} strokeWidth={1.75} /> POS</Link></li>
         )}
         {['kitchen', 'drinks', 'dessert'].some((s) => can(`kds.${s}`)) && (
-          <li><Link to="/kds" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] text-cream/75 hover:bg-cream/10"><ChefHat size={18} strokeWidth={1.75} /> {t('kds.title')}</Link></li>
+          <li><Link to="/kds" className={navItem(false)}><ChefHat size={18} strokeWidth={1.75} /> {t('kds.title')}</Link></li>
         )}
       </ul>
-      <div className="border-t border-cream/10 p-3">
-        <button onClick={() => setAccount(true)} className="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-cream/10" title={t('acct.title')}>
+      <div className="shrink-0 border-t border-cream/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <button onClick={() => setAccount(true)} className="press mb-1 block w-full rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-nav-hover" title={t('acct.title')}>
           <div className="font-medium">{user?.full_name}</div>
           <div className="text-xs text-cream/60">{t(`role.${user?.role}`)} · {t('acct.title')}</div>
         </button>
         <div className="flex gap-1">
-          <button onClick={() => saveLanguage(nextLang.code)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm text-cream/80 hover:bg-cream/10" title={t('lang.title')}>
+          <button onClick={() => saveLanguage(nextLang.code)} className="press flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-sm text-cream/80 transition-colors hover:bg-nav-hover" title={t('lang.title')}>
             <Globe size={16} /> {nextLang.label}
           </button>
-          <button onClick={(e) => setTheme(toggleTheme(e))} className="grid size-9 place-items-center rounded-lg text-cream/80 transition hover:bg-cream/10 active:scale-90" aria-label={t('theme.toggle')}>
-            <ThemeIcon theme={theme} size={16} />
+          <button onClick={switchTheme} className="press grid size-10 place-items-center rounded-xl text-cream/80 transition-colors hover:bg-nav-hover" aria-label={t('theme.toggle')}>
+            <ThemeIcon theme={theme} size={17} />
           </button>
-          <button onClick={logout} className="grid size-9 place-items-center rounded-lg text-cream/80 hover:bg-cream/10" aria-label={t('kds.signOut')}>
+          <button onClick={logout} className="press grid size-10 place-items-center rounded-xl text-cream/80 transition-colors hover:bg-nav-hover" aria-label={t('kds.signOut')}>
             <LogOut size={16} />
           </button>
         </div>
@@ -139,26 +128,21 @@ function Shell({ items, children }) {
     <div className="min-h-dvh bg-bg lg:pl-60">
       {account && <Suspense fallback={null}><MyAccount onClose={() => setAccount(false)} /></Suspense>}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 lg:block">{sidebar}</aside>
-      <div className={`fixed inset-0 z-50 lg:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
-        <button
-          tabIndex={open ? 0 : -1}
-          className={`absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${open ? 'opacity-100' : 'opacity-0'}`}
-          onClick={() => setOpen(false)}
-          aria-label={t('common.close')}
-        />
-        <aside
-          inert={!open}
-          className={`relative h-full w-64 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${open ? 'translate-x-0' : '-translate-x-full'}`}
-        >
-          {sidebar}
-        </aside>
-      </div>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur lg:hidden">
+      <MobileDrawer open={open} onClose={() => setOpen(false)} closeLabel={t('common.close')}>{sidebar}</MobileDrawer>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-bg/85 px-3 backdrop-blur-md transition-colors duration-300 lg:hidden">
         <button onClick={() => setOpen(true)} aria-label={t('admin.menu')} aria-expanded={open}
-          className="-ml-1 grid size-10 place-items-center rounded-lg transition hover:bg-surface-2 active:scale-90">
+          className="press grid size-11 place-items-center rounded-full text-ink hover:bg-surface-2">
           <Burger open={open} />
         </button>
         <LogoHorizontal height={22} className="text-brand" />
+        <div className="ml-auto flex items-center">
+          <button onClick={() => saveLanguage(nextLang.code)} className="press flex h-10 items-center gap-1.5 rounded-full px-3 text-sm text-ink hover:bg-surface-2" title={t('lang.title')}>
+            <Globe size={17} strokeWidth={1.75} /> <span className="text-[13px]">{nextLang.label}</span>
+          </button>
+          <button onClick={switchTheme} className="press grid size-10 place-items-center rounded-full text-ink hover:bg-surface-2" aria-label={t('theme.toggle')}>
+            <ThemeIcon theme={theme} size={19} />
+          </button>
+        </div>
       </header>
       <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
         <ServiceAlerts className="mb-4" />
@@ -168,14 +152,105 @@ function Shell({ items, children }) {
   )
 }
 
-/** Three lines that turn into an X while the menu is open. */
+/**
+ * Phone menu that behaves like iPhone's own drawers: glides in on the iOS curve, the page
+ * dims behind it, and it follows your finger when you swipe it closed (a short flick is enough).
+ * Escape and tapping outside also close it; the page behind cannot scroll while it is open.
+ */
+function MobileDrawer({ open, onClose, closeLabel, children }) {
+  const panel = useRef(null)
+  const shade = useRef(null)
+  const drag = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && onClose()
+    const before = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = before
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open, onClose])
+
+  function down(e) {
+    if (e.pointerType === 'mouse') return
+    drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), dx: 0, moving: false }
+  }
+  function move(e) {
+    const d = drag.current
+    if (!d) return
+    const dx = e.clientX - d.x
+    const dy = e.clientY - d.y
+    if (!d.moving) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag.current = null; return } // scrolling the list
+      if (Math.abs(dx) < 8) return
+      d.moving = true
+      panel.current.style.transition = 'none'
+      shade.current.style.transition = 'none'
+    }
+    d.dx = Math.min(0, dx)
+    const w = panel.current.offsetWidth
+    panel.current.style.transform = `translate3d(${d.dx}px,0,0)`
+    shade.current.style.opacity = String(Math.max(0, 1 + d.dx / w))
+  }
+  function up() {
+    const d = drag.current
+    drag.current = null
+    if (!d?.moving) return
+    const el = panel.current
+    const speed = d.dx / Math.max(1, performance.now() - d.t) // px per ms (negative = towards the left)
+    el.style.transition = ''
+    shade.current.style.transition = ''
+    shade.current.style.opacity = ''
+    // close after dragging a third of the way, or a quick flick of at least 50 px
+    if (d.dx < -el.offsetWidth * 0.33 || (speed < -0.5 && d.dx < -50)) {
+      el.style.transform = 'translate3d(-100%,0,0)'
+      onClose()
+    } else {
+      el.style.transform = 'translate3d(0,0,0)'
+    }
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 lg:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
+      <button
+        ref={shade}
+        tabIndex={open ? 0 : -1}
+        onClick={onClose}
+        aria-label={closeLabel}
+        className="absolute inset-0 bg-black/50 motion-reduce:transition-none"
+        style={{ opacity: open ? 1 : 0, transition: 'opacity 380ms var(--ease-ios)' }}
+      />
+      <aside
+        ref={panel}
+        inert={!open}
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerCancel={up}
+        className="relative h-full w-[280px] max-w-[85vw] shadow-[8px_0_40px_rgba(0,0,0,0.35)] will-change-transform motion-reduce:transition-none"
+        style={{
+          transform: open ? 'translate3d(0,0,0)' : 'translate3d(-100%,0,0)',
+          transition: 'transform 440ms var(--ease-ios)',
+          touchAction: 'pan-y',
+        }}
+      >
+        {children}
+      </aside>
+    </div>
+  )
+}
+
+/** Three lines that glide into an X (transform only, so it stays smooth on phones). */
 function Burger({ open }) {
-  const line = 'absolute left-0 block h-[2px] w-[22px] rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none'
+  const line = 'absolute left-0 top-[7px] block h-[2px] w-[22px] rounded-full bg-current transition-[transform,translate,rotate,scale,opacity] duration-[440ms] ease-ios motion-reduce:transition-none'
   return (
     <span className="relative block h-4 w-[22px]" aria-hidden="true">
-      <span className={`${line} ${open ? 'top-[7px] rotate-45' : 'top-0'}`} />
-      <span className={`${line} top-[7px] ${open ? 'scale-x-0 opacity-0' : 'opacity-100'}`} />
-      <span className={`${line} ${open ? 'top-[7px] -rotate-45' : 'top-[14px]'}`} />
+      <span className={`${line} ${open ? 'rotate-45' : '-translate-y-[7px]'}`} />
+      <span className={`${line} ${open ? 'scale-x-0 opacity-0' : 'opacity-100'}`} />
+      <span className={`${line} ${open ? '-rotate-45' : 'translate-y-[7px]'}`} />
     </span>
   )
 }

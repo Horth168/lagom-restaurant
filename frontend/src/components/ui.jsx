@@ -5,7 +5,7 @@ import { useI18n } from '../i18n'
 
 export function Card({ title, action, children, className = '' }) {
   return (
-    <section className={`rounded-xl border border-line bg-surface ${className}`}>
+    <section className={`min-w-0 rounded-xl border border-line bg-surface ${className}`}>
       {(title || action) && (
         <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
           <h2 className="text-[15px] font-semibold">{title}</h2>
@@ -29,7 +29,7 @@ export function Button({ variant = 'secondary', size = 'md', className = '', ...
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${sz} ${BTN[variant]} ${className}`}
+      className={`press inline-flex items-center justify-center gap-2 rounded-lg font-medium disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${sz} ${BTN[variant]} ${className}`}
     />
   )
 }

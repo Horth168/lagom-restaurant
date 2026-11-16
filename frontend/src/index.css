@@ -21,6 +21,10 @@
   --series-1: #1f8a5c; /* KHQR / main series */
   --series-2: #d9762b; /* cash */
   --grid: #ebe3d5;
+  --nav: #263d31; /* admin sidebar */
+  --nav-hover: rgba(243, 235, 221, 0.1);
+  --nav-active: rgba(243, 235, 221, 0.16);
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1); /* the curve iPhone uses for sheets and drawers */
   color-scheme: light;
 }
 
@@ -39,6 +43,9 @@
     --series-1: #2fa874;
     --series-2: #d27a2e;
     --grid: #2a352f;
+    --nav: #0c120e;
+    --nav-hover: rgba(243, 235, 221, 0.07);
+    --nav-active: rgba(214, 160, 106, 0.16);
     color-scheme: dark;
   }
 }
@@ -56,6 +63,9 @@
   --series-1: #2fa874;
   --series-2: #d27a2e;
   --grid: #2a352f;
+  --nav: #0c120e;
+  --nav-hover: rgba(243, 235, 221, 0.07);
+  --nav-active: rgba(214, 160, 106, 0.16);
   color-scheme: dark;
 }
 
@@ -94,6 +104,10 @@
   --color-gold: var(--gold);
   --color-sand: var(--sand);
   --color-olive: var(--olive);
+  --color-nav: var(--nav);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --ease-ios: var(--ease-ios);
 
   --font-sans: 'Inter Variable', 'Kantumruy Pro Variable', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei',
     system-ui, sans-serif;
@@ -110,6 +124,32 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip; /* nothing may ever make the page wider than the phone */
+}
+
+/* A grid column must never grow wider than the screen because of one wide child
+   (e.g. a chart or table): the child scrolls inside its own card instead. */
+.grid > * {
+  min-width: 0;
+}
+
+/* Instant, smooth touch: no grey flash, no 300 ms double-tap delay */
+a, button, [role='button'], [role='radio'], [role='tab'], label, summary, select {
+  touch-action: manipulation;
+}
+button, a, [role='radio'] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Pressing anything clickable gives a quick, gentle response */
+.press {
+  transition: transform 160ms var(--ease-ios), background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .press, .press:active { transition: none; transform: none; }
 }
 /* Khmer script needs more line height to fit its stacked vowels */
 :lang(km) {

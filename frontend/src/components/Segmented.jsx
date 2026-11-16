@@ -59,7 +59,7 @@ export function Segmented({ options, value, onChange, label, className = '', siz
               role="radio"
               aria-checked={on}
               onClick={() => onChange(o.value)}
-              className={`${h} shrink-0 whitespace-nowrap rounded-lg font-medium transition-[background-color,color,box-shadow] duration-200 motion-reduce:transition-none ${
+              className={`${h} press shrink-0 whitespace-nowrap rounded-lg font-medium ${
                 on ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_1px_var(--line)]' : 'text-muted hover:text-ink'
               }`}
             >
