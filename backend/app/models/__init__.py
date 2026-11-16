@@ -6,6 +6,7 @@ from app.models.orders import DailyCounter, Order, OrderItem
 from app.models.payments import BankNotice, Payment, PaymentEvent, Refund
 from app.models.inventory import Ingredient, Purchase, PurchaseLine, RecipeItem, StockMovement, Supplier
 from app.models.finance import Expense
+from app.models.extras import CashShift, Deal, ItemRating, LoyaltyCard, OrderReview, ServiceRequest
 
 __all__ = [
     "AppSetting", "AuditLog", "User",
@@ -15,4 +16,5 @@ __all__ = [
     "BankNotice", "Payment", "PaymentEvent", "Refund",
     "Ingredient", "Purchase", "PurchaseLine", "RecipeItem", "StockMovement", "Supplier",
     "Expense",
+    "CashShift", "Deal", "ItemRating", "LoyaltyCard", "OrderReview", "ServiceRequest",
 ]

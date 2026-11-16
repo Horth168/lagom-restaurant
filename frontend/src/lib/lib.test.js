@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatKHR, formatPrice, formatUSD, usdCentsToKhr } from './money'
-import { addLine, defaultSelection, lineKey, missingGroups, previewUnitPrice, setQuantity, toggleOption } from './cartMath'
+import { addLine, dealPrice, defaultSelection, lineKey, missingGroups, previewUnitPrice, setQuantity, toggleOption } from './cartMath'
 import { translate } from '../i18n/index.jsx'
 import en from '../i18n/en.json'
 import km from '../i18n/km.json'
@@ -78,4 +78,13 @@ describe('translations', () => {
   it('fills variables', () => {
     expect(translate('en', 'cart.items', { n: 3 })).toBe('3 items')
   })
+})
+
+it('deal price rounds like the server (half to even)', () => {
+  expect(dealPrice(275, 20)).toBe(220)
+  expect(dealPrice(325, 20)).toBe(260)
+  expect(dealPrice(250, 10)).toBe(225)
+  expect(dealPrice(125, 50)).toBe(62) // 62.5 -> 62 (even)
+  expect(dealPrice(375, 50)).toBe(188) // 187.5 -> 188 (even)
+  expect(dealPrice(500, 0)).toBe(500)
 })

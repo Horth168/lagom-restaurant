@@ -4,7 +4,7 @@ import { ProductImage } from '../../components/ProductImage'
 import { Sheet } from '../../components/Sheet'
 import { useI18n } from '../../i18n'
 import { formatPrice, formatUSD } from '../../lib/money'
-import { defaultSelection, missingGroups, previewUnitPrice, selectedOptionIds, toggleOption } from '../../lib/cartMath'
+import { dealPrice, defaultSelection, missingGroups, previewUnitPrice, selectedOptionIds, toggleOption } from '../../lib/cartMath'
 import { useCustomer } from './CustomerContext'
 
 export function ProductSheet({ product, onClose }) {
@@ -67,7 +67,11 @@ function ProductForm({ product, onDone }) {
         <h2 className="font-display text-[28px] leading-tight">{pick(product.name)}</h2>
         {pick(product.description) && <p className="mt-2 text-[15px] text-muted">{pick(product.description)}</p>}
         <div className="mt-3 flex items-center gap-3 text-sm text-muted">
-          <span className="font-semibold text-ink">{formatPrice(product.price_usd_cents, settings).primary}</span>
+          <span className="font-semibold text-ink">
+            {formatPrice(dealPrice(product.price_usd_cents, product.deal?.percent), settings).primary}
+            {product.deal && <s className="ml-1.5 font-normal text-muted">{formatPrice(product.price_usd_cents, settings).primary}</s>}
+          </span>
+          {product.deal && <span className="rounded-full bg-series-2/15 px-2 py-0.5 text-xs font-semibold text-series-2">{product.deal.name} · −{product.deal.percent}%</span>}
           <span className="inline-flex items-center gap-1">
             <Clock size={14} /> {t('product.prep', { n: product.prep_minutes })}
           </span>

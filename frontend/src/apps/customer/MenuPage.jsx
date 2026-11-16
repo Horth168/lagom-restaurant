@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, ShoppingBag, X } from 'lucide-react'
 import { Price } from '../../components/Price'
+import { StampCard } from './StampCard'
 import { ProductImage } from '../../components/ProductImage'
 import { useI18n } from '../../i18n'
 import { formatPrice } from '../../lib/money'
-import { itemCount } from '../../lib/cartMath'
+import { itemCount, dealPrice } from '../../lib/cartMath'
 import { useCustomer } from './CustomerContext'
 import { Header } from './Header'
 import { ProductSheet } from './ProductSheet'
@@ -74,6 +75,7 @@ export function MenuPage() {
     <div className="min-h-dvh pb-28">
       <Header />
       <main className="mx-auto max-w-2xl">
+        <StampCard />
         <div className="px-4 pt-4">
           <label className="flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 focus-within:border-accent">
             <Search size={18} className="text-muted" />
@@ -139,7 +141,10 @@ export function MenuPage() {
                         iconSize={34}
                       />
                       <div className="mt-2 line-clamp-2 text-[15px] font-medium leading-snug">{pick(p.name)}</div>
-                      <div className="mt-0.5 text-sm font-semibold text-accent">{formatPrice(p.price_usd_cents, settings).primary}</div>
+                      <div className="mt-0.5 text-sm font-semibold text-accent">
+                        {formatPrice(dealPrice(p.price_usd_cents, p.deal?.percent), settings).primary}
+                        {p.deal && <s className="ml-1.5 font-normal text-muted">{formatPrice(p.price_usd_cents, settings).primary}</s>}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -213,12 +218,22 @@ function ProductRow({ product: p, slug, onOpen }) {
           <div className="flex items-center gap-2">
             <span className={`text-[16px] font-medium leading-snug ${soldOut ? 'text-muted' : ''}`}>{pick(p.name)}</span>
           </div>
+          {p.deal && !soldOut && (
+            <span className="mt-1 w-fit rounded-full bg-series-2/15 px-2 py-0.5 text-[11px] font-semibold text-series-2">
+              {p.deal.name} · −{p.deal.percent}%
+            </span>
+          )}
           {p.is_best_seller && !soldOut && (
             <span className="mt-1 w-fit text-[11px] font-semibold uppercase tracking-wider text-accent">{t('menu.bestSeller')}</span>
           )}
           <p className="mt-1 line-clamp-2 text-sm text-muted">{pick(p.description)}</p>
           <div className="mt-auto pt-2 text-[15px] font-semibold">
-            {soldOut ? <span className="text-muted">{t('menu.soldOut')}</span> : <Price cents={p.price_usd_cents} settings={settings} inline secondaryClassName="text-xs" />}
+            {soldOut ? <span className="text-muted">{t('menu.soldOut')}</span> : (
+              <>
+                <Price cents={dealPrice(p.price_usd_cents, p.deal?.percent)} settings={settings} inline secondaryClassName="text-xs" />
+                {p.deal && <s className="ml-2 text-sm font-normal text-muted">{formatPrice(p.price_usd_cents, settings).primary}</s>}
+              </>
+            )}
           </div>
         </div>
         <div className="relative shrink-0">

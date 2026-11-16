@@ -11,12 +11,14 @@ import { Sheet } from '../../components/Sheet'
 import { Badge, Button, Field, inputBase, inputCls, parseUsd, STATUS_TONE, ToastProvider, useToast } from '../../components/ui'
 import { appLocale, useI18n } from '../../i18n'
 import { api } from '../../lib/api'
-import { addLine, defaultSelection, itemCount, missingGroups, previewUnitPrice, selectedOptionIds, setQuantity, toggleOption } from '../../lib/cartMath'
+import { addLine, dealPrice, defaultSelection, itemCount, missingGroups, previewUnitPrice, selectedOptionIds, setQuantity, toggleOption } from '../../lib/cartMath'
 import { formatKHR, formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
 import { useStaff } from '../../lib/staffAuth'
 import { CashForm } from '../admin/Payments'
 import { OrderDetail } from '../admin/Orders'
+import { ServiceAlerts } from '../../components/ServiceAlerts'
+import { ShiftBar } from './ShiftBar'
 
 const newKey = () => (crypto.randomUUID ? crypto.randomUUID().replaceAll('-', '') : String(Date.now()) + Math.random().toString(16).slice(2))
 
@@ -154,10 +156,12 @@ function Pos() {
             <Search size={16} className="absolute top-3 left-3 text-muted" />
             <input className={`${inputCls} pl-9`} placeholder={t('menu.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
+          <ShiftBar />
           <Button variant="ghost" onClick={() => setHistoryOpen(true)} title={t('pos.history')}><History size={18} /></Button>
           {can('dashboard.view') && <Link to="/admin" className="grid size-10 place-items-center rounded-lg hover:bg-surface-2" title={t('admin.title')}><LayoutDashboard size={18} /></Link>}
           <Button variant="ghost" onClick={logout} title={`${t('kds.signOut')} (${user?.full_name})`}><LogOut size={18} /></Button>
         </header>
+        <ServiceAlerts className="border-b border-line px-4 py-2" />
         <nav className="no-scrollbar flex gap-2 overflow-x-auto border-b border-line px-4 py-2">
           {[{ id: 'all', name: { en: t('pos.all') } }, ...menu.categories].map((c) => (
             <button key={c.id} onClick={() => setCat(c.id)} className={`shrink-0 rounded-full px-4 py-2 text-sm ${cat === c.id ? 'bg-brand text-on-brand' : 'border border-line bg-surface'}`}>
@@ -172,7 +176,10 @@ function Pos() {
               <ProductImage src={p.image_url} alt={pick(p.name)} categorySlug={menu.categories.find((c) => c.id === p.category_id)?.slug} className="aspect-[4/3] w-full" />
               <div className="p-3">
                 <div className="line-clamp-2 text-sm font-medium leading-snug">{pick(p.name)}</div>
-                <div className="mt-1 text-sm font-semibold text-accent">{p.is_available ? formatUSD(p.price_usd_cents) : t('menu.soldOut')}</div>
+                <div className="mt-1 text-sm font-semibold text-accent">
+                  {p.is_available ? formatUSD(dealPrice(p.price_usd_cents, p.deal?.percent)) : t('menu.soldOut')}
+                  {p.is_available && p.deal && <span className="ml-1.5 text-xs font-normal text-series-2">−{p.deal.percent}%</span>}
+                </div>
               </div>
             </button>
           ))}

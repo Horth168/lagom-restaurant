@@ -72,6 +72,9 @@ class Order(TimestampMixin, Base):
     cancelled_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     inventory_deducted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Telegram stamp card: a free item was used on this order / stamps this order earned
+    loyalty_reward_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    loyalty_stamps_given: Mapped[int] = mapped_column(Integer, default=0)
 
     items: Mapped[list["OrderItem"]] = relationship(
         back_populates="order", cascade="all, delete-orphan", order_by="OrderItem.id"

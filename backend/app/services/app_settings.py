@@ -25,9 +25,19 @@ DEFAULTS: dict[str, tuple[object, type]] = {
     "daily_summary_time": ("22:00", str),  # restaurant time, HH:MM
     "daily_summary_last_sent": ("", str),  # internal: date of the last summary
     "timezone": ("Asia/Phnom_Penh", str),
+    "telegram_notify_shifts": (True, bool),  # cash drawer closed (expected vs counted)
+    "telegram_notify_service": (True, bool),  # "Table 05 asks for the bill"
+    "telegram_notify_reviews": (True, bool),  # low ratings (1–2 stars)
+    "auto_sold_out": (True, bool),  # dishes become "sold out" when an ingredient runs out
+    "backup_reminder": (True, bool),  # weekly Telegram reminder to download a backup
+    "backup_reminder_last_week": ("", str),  # internal
+    # Telegram stamp card: every N eligible items paid in the Mini App earns one free item
+    "loyalty_enabled": (False, bool),
+    "loyalty_stamps_needed": (9, int),
+    "loyalty_category_ids": ([], list),
 }
 
-INTERNAL_KEYS = {"daily_summary_last_sent"}  # managed by the system, not editable in Settings
+INTERNAL_KEYS = {"daily_summary_last_sent", "backup_reminder_last_week"}  # managed by the system, not editable in Settings
 PUBLIC_KEYS = {"restaurant_name", "khr_per_usd", "display_currency", "show_secondary_currency"}
 
 

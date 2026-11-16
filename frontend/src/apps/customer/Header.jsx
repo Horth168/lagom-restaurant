@@ -6,6 +6,7 @@ import { Sheet } from '../../components/Sheet'
 import { LANGUAGES, useI18n } from '../../i18n'
 import { currentTheme, toggleTheme } from '../../lib/theme'
 import { useCustomer } from './CustomerContext'
+import { ServiceButton } from './ServiceButton'
 
 export function Header({ title, backTo }) {
   const { t, lang, setLang } = useI18n()
@@ -29,6 +30,7 @@ export function Header({ title, backTo }) {
             <MapPin size={13} className="text-accent" />
             {session?.pickup ? t('track.pickup') : session?.table.label}
           </span>
+          <ServiceButton />
           {!backTo && (
             <Link to="orders" className="grid size-9 place-items-center rounded-full text-ink hover:bg-surface-2" aria-label={t('orders.title')}>
               <Receipt size={19} strokeWidth={1.75} />

@@ -43,6 +43,14 @@ def menu(response: Response, db: Session = Depends(get_db)):
         select(Promotion).where(Promotion.is_active.is_(True)).order_by(Promotion.sort_order, Promotion.id)
     ).all()
     response.headers["Cache-Control"] = "public, max-age=30"
+    from app.services.deals import DealBook, short_product_ids
+
+    deals, short = DealBook(db), short_product_ids(db)
+
+    def deal_of(p):
+        d = deals.best_for(p)
+        return {"name": d.name, "percent": d.percent} if d else None
+
     return {
         "categories": [{"id": c.id, "slug": c.slug, "name": _tr(c, "name")} for c in categories],
         "products": [
@@ -56,7 +64,8 @@ def menu(response: Response, db: Session = Depends(get_db)):
                 "image_source_url": p.image_source_url,
                 "price_usd_cents": p.price_usd_cents,
                 "prep_minutes": p.prep_minutes,
-                "is_available": p.is_available,
+                "is_available": p.is_available and p.id not in short,
+                "deal": deal_of(p),
                 "is_featured": p.is_featured,
                 "is_best_seller": p.is_best_seller,
                 "allow_special_instructions": p.allow_special_instructions,
@@ -178,6 +187,8 @@ def quote(cart: CartIn, db: Session = Depends(get_db)):
                 "line_total_usd_cents": line.line_total_usd_cents,
                 "options": line.option_snapshot,
                 "special_instructions": line.special_instructions,
+                "deal": {"name": line.deal_name, "percent": line.deal_percent,
+                         "list_unit_price_usd_cents": line.list_unit_price_usd_cents} if line.deal_percent else None,
             }
             for line in priced.lines
         ],

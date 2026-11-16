@@ -80,6 +80,20 @@ MESSAGES: dict[str, tuple[str, str]] = {
     "Use a time like 22:00": ("សូមប្រើម៉ោងដូចជា 22:00", "请使用类似 22:00 的时间格式"),
     "Ordering in Telegram is not available right now.": ("ការកុម្ម៉ង់តាម Telegram មិនអាចប្រើបានពេលនេះទេ។", "暂时无法在 Telegram 中下单。"),
     "Please open LAGOM again from Telegram.": ("សូមបើក LAGOM ម្តងទៀតពី Telegram។", "请从 Telegram 重新打开 LAGOM。"),
+    "A shift is already open. Close it first.": ("វេនការងារបានបើករួចហើយ។ សូមបិទវាជាមុនសិន។", "已有一个班次在进行中，请先结束它。"),
+    "No shift is open.": ("មិនមានវេនការងារកំពុងបើកទេ។", "当前没有进行中的班次。"),
+    "This order is not free.": ("ការកុម្ម៉ង់នេះមិនឥតគិតថ្លៃទេ។", "此订单不是免费的。"),
+    "Add an item from the stamp card categories to use your free item.": (
+        "សូមបន្ថែមមុខម្ហូបពីប្រភេទកាតត្រា ដើម្បីប្រើមុខឥតគិតថ្លៃ។", "请加入集章卡类别中的商品才能使用免费商品。"),
+    "You have no free item on your stamp card yet.": ("អ្នកមិនទាន់មានមុខឥតគិតថ្លៃលើកាតត្រានៅឡើយទេ។", "您的集章卡上还没有免费商品。"),
+    "Choose a category from the list.": ("សូមជ្រើសរើសប្រភេទពីបញ្ជី។", "请从列表中选择类别。"),
+    "Choose a dish from the list.": ("សូមជ្រើសរើសមុខម្ហូបពីបញ្ជី។", "请从列表中选择菜品。"),
+    "Choose categories from the list.": ("សូមជ្រើសរើសប្រភេទពីបញ្ជី។", "请从列表中选择类别。"),
+    "Stamps needed must be between 2 and 50.": ("ចំនួនត្រាត្រូវនៅចន្លោះ 2 ដល់ 50។", "所需印章数必须在 2 到 50 之间。"),
+    "Thank you, this order is already rated.": ("សូមអរគុណ ការកុម្ម៉ង់នេះបានវាយតម្លៃរួចហើយ។", "谢谢，此订单已评价。"),
+    "That dish is not in this order.": ("មុខម្ហូបនោះមិនមានក្នុងការកុម្ម៉ង់នេះទេ។", "此订单中没有该菜品。"),
+    "This is only for customers at a table.": ("មុខងារនេះសម្រាប់តែភ្ញៀវនៅតុប៉ុណ្ណោះ។", "此功能仅限堂食顾客使用。"),
+    "You can rate your order once it is ready.": ("អ្នកអាចវាយតម្លៃបាន នៅពេលការកុម្ម៉ង់រួចរាល់។", "订单完成后即可评价。"),
 }
 
 # Messages that contain a product/option/group name: translated without the name

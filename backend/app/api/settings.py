@@ -35,6 +35,8 @@ def read_settings(db: Session = Depends(get_db), _: CurrentStaff = Depends(requi
             "payment_listener_configured": s.listener_enabled,
             "telegram_configured": bool(s.telegram_bot_token and s.telegram_chat_id),
             "r2_configured": bool(s.r2_bucket and s.r2_access_key_id),
+            # Where uploaded menu photos are kept: r2 | database | disk
+            "photo_storage": "r2" if (s.r2_bucket and s.r2_access_key_id) else s.photo_storage,
             "environment": s.environment,
             "production_problems": s.validate_for_production() if s.is_production else [],
         },
@@ -65,6 +67,12 @@ def update_settings(
             raise HTTPException(422, f"{key} must be text")
         elif typ is list and not isinstance(value, list):
             raise HTTPException(422, f"{key} must be a list")
+        elif typ is int and (isinstance(value, bool) or not isinstance(value, int)):
+            raise HTTPException(422, f"{key} must be a whole number")
+        if key == "loyalty_stamps_needed" and not (2 <= value <= 50):
+            raise HTTPException(422, "Stamps needed must be between 2 and 50.")
+        if key == "loyalty_category_ids" and not all(isinstance(x, int) and not isinstance(x, bool) for x in value):
+            raise HTTPException(422, "Choose categories from the list.")
         if key == "daily_summary_time" and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", value):
             raise HTTPException(422, "Use a time like 22:00")
         if key == "display_currency" and value not in ("USD", "KHR"):

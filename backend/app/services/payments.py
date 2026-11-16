@@ -90,6 +90,25 @@ def start_payment(db: Session, order: Order, method: str, currency: Currency) ->
     return payment
 
 
+def confirm_free(db: Session, order: Order) -> Payment:
+    """The whole order is covered by a discount (e.g. a stamp-card free item): nothing to pay.
+
+    Recorded as an approved payment of 0 so the order history stays complete. Not cash,
+    so it never changes what should be in the cash drawer. The caller commits.
+    """
+    if order.total_usd_cents != 0 or order.status != OrderStatus.PENDING_PAYMENT:
+        raise PaymentProblem("This order is not free.", 409)
+    payment = Payment(order_id=order.id, provider=PaymentProvider.CASH, tran_id=new_reference(order),
+                      payment_option="free", currency=Currency.USD, amount_minor=0,
+                      status=PaymentStatus.APPROVED, approved_at=utcnow())
+    db.add(payment)
+    db.flush()
+    log_event(db, payment, "FREE", verified=True, note=f"Fully covered by a discount: {order.discount_reason}")
+    if mark_order_paid(db, order, payment):
+        run_paid_listeners(db, order)
+    return payment
+
+
 def confirm_cash(db: Session, order: Order, *, received_minor: int, currency: Currency, user_id: int) -> Payment:
     """A cashier took the money at the counter."""
     if order.status not in (OrderStatus.PENDING_PAYMENT, OrderStatus.EXPIRED):

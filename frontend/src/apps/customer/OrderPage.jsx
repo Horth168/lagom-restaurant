@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n'
 import { api, ApiError } from '../../lib/api'
 import { formatKHR, formatUSD } from '../../lib/money'
 import { useLiveChannel } from '../../lib/realtime'
+import { ReviewBox } from './ReviewBox'
 import { useCustomer } from './CustomerContext'
 import { Header } from './Header'
 
@@ -388,6 +389,8 @@ function TrackingView({ order }) {
           </div>
         )}
       </section>
+
+      {['READY', 'SERVED'].includes(order.status) && <ReviewBox order={order} />}
 
       <p className="mt-4 text-center text-xs text-muted">{t('track.live')}</p>
       <div className="mt-6 text-center">

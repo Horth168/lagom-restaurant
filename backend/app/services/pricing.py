@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Option, OptionGroup, Product
 from app.models.enums import OptionSelection, Station
 from app.services.app_settings import khr_per_usd, usd_cents_to_khr
+from app.services.deals import DealBook, apply_percent, short_product_ids
 
 MAX_QTY_PER_LINE = 50
 MAX_LINES = 40
@@ -50,6 +51,10 @@ class PricedLine:
     station: Station
     prep_minutes: int
     option_snapshot: list[dict] = field(default_factory=list)
+    # Timed deal applied to this line (e.g. "Happy hour", 20) and the price before it
+    deal_name: str = ""
+    deal_percent: int = 0
+    list_unit_price_usd_cents: int = 0
 
 
 @dataclass
@@ -81,10 +86,11 @@ def _load_products(db: Session, ids: set[int]) -> dict[int, Product]:
     return {p.id: p for p in rows}
 
 
-def price_line(product: Product | None, line: CartLineIn, index: int) -> PricedLine:
+def price_line(product: Product | None, line: CartLineIn, index: int, deals=None,
+               short: frozenset | set = frozenset()) -> PricedLine:
     if product is None or product.is_archived or not product.category.is_active:
         raise PricingError("This item is no longer on the menu.", index, "not_found")
-    if not product.is_available:
+    if not product.is_available or product.id in short:
         raise PricingError(f"{product.name_en} is sold out right now.", index, "sold_out")
 
     if len(set(line.option_ids)) != len(line.option_ids):
@@ -113,7 +119,9 @@ def price_line(product: Product | None, line: CartLineIn, index: int) -> PricedL
         instructions = ""
 
     ordered = [o for g in product.option_groups for o in chosen[g.id]]
-    unit = product.price_usd_cents + sum(o.price_delta_usd_cents for o in ordered)
+    list_unit = product.price_usd_cents + sum(o.price_delta_usd_cents for o in ordered)
+    deal = deals.best_for(product) if deals else None
+    unit = apply_percent(list_unit, deal.percent) if deal else list_unit
     snapshot = [
         {
             "option_id": o.id,
@@ -133,12 +141,17 @@ def price_line(product: Product | None, line: CartLineIn, index: int) -> PricedL
         station=product.effective_station,
         prep_minutes=product.prep_minutes,
         option_snapshot=snapshot,
+        deal_name=deal.name if deal else "",
+        deal_percent=deal.percent if deal else 0,
+        list_unit_price_usd_cents=list_unit,
     )
 
 
 def price_cart(db: Session, cart: CartIn) -> PricedCart:
-    products = _load_products(db, {line.product_id for line in cart.items})
-    lines = [price_line(products.get(line.product_id), line, i) for i, line in enumerate(cart.items)]
+    ids = {line.product_id for line in cart.items}
+    products = _load_products(db, ids)
+    deals, short = DealBook(db), short_product_ids(db, ids)
+    lines = [price_line(products.get(line.product_id), line, i, deals, short) for i, line in enumerate(cart.items)]
     subtotal = sum(line.line_total_usd_cents for line in lines)
     rate = khr_per_usd(db)
     return PricedCart(lines=lines, subtotal_usd_cents=subtotal, khr_per_usd=rate,

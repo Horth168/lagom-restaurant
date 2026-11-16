@@ -7,6 +7,7 @@ import { RequireStaff, StaffAuthProvider } from './lib/staffAuth'
 // Each section is loaded only when needed, so customers' phones download only the customer app
 const CustomerApp = lazy(() => import('./apps/customer/CustomerApp'))
 const TelegramApp = lazy(() => import('./apps/customer/TelegramApp'))
+const BrowseMenu = lazy(() => import('./apps/customer/BrowseMenu'))
 const LoginPage = lazy(() => import('./apps/staff/LoginPage'))
 const KdsApp = lazy(() => import('./apps/kds/KdsApp'))
 const AdminApp = lazy(() => import('./apps/admin/AdminApp'))
@@ -21,6 +22,7 @@ export default function App() {
             <Routes>
               <Route path="/t/:qrToken/*" element={<CustomerApp />} />
               <Route path="/tg/*" element={<TelegramApp />} />
+              <Route path="/menu" element={<BrowseMenu />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/kds/*" element={<RequireStaff><KdsApp /></RequireStaff>} />
               <Route path="/admin/*" element={<RequireStaff><AdminApp /></RequireStaff>} />
@@ -44,6 +46,7 @@ function Welcome() {
         <span className="text-[11px] uppercase tracking-[0.3em] text-accent">{t('brand.descriptor')}</span>
       </div>
       <p className="max-w-sm text-muted">{t('home.body')}</p>
+      <a href="/menu" className="rounded-full border border-line px-6 py-3 text-sm font-medium text-ink hover:bg-surface-2">{t('browse.see')}</a>
       <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold">{t('brand.slogan')}</span>
     </main>
   )

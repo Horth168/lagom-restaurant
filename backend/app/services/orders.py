@@ -162,6 +162,9 @@ def run_paid_listeners(db: Session, order: Order) -> None:
 def expire_order(db: Session, order: Order) -> None:
     if order.status != OrderStatus.PENDING_PAYMENT:
         return
+    from app.services.loyalty import give_back
+
+    give_back(db, order, was_paid=False)  # a reserved free item goes back on the stamp card
     order.status = OrderStatus.EXPIRED
     for p in order.payments:
         if p.status == PaymentStatus.PENDING:
@@ -178,6 +181,9 @@ def cancel_order(db: Session, order: Order, *, reason: str, user_id: int) -> lis
 
     if order.status in (OrderStatus.CANCELLED, OrderStatus.EXPIRED):
         raise ValueError("This order is already closed.")
+    from app.services.loyalty import give_back
+
+    give_back(db, order, was_paid=order.status != OrderStatus.PENDING_PAYMENT)
     refunds = []
     for p in order.payments:
         if p.status == PaymentStatus.PENDING:

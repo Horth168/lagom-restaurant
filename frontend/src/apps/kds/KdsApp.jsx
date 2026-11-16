@@ -1,9 +1,10 @@
 /* Kitchen Display System: one screen per station (Kitchen, Drinks, Dessert).
  * Paid orders appear instantly (WebSocket), oldest first, with a waiting timer and big buttons for tablets.
  */
+import { KitchenTicket } from '../../components/KitchenTicket'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import { Bell, BellOff, Check, Flag, LogOut, Maximize, Minimize, StickyNote } from 'lucide-react'
+import { Bell, BellOff, Check, Flag, LogOut, Maximize, Minimize, Printer, StickyNote } from 'lucide-react'
 import { Mark } from '../../components/Logo'
 import { appLocale, useI18n } from '../../i18n'
 import { useLiveChannel } from '../../lib/realtime'
@@ -59,13 +60,19 @@ function StationScreen() {
   const [soundReady, setSoundReady] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
   const known = useRef(null)
+  // Kitchen ticket printer: print a ticket for every new order (this device only)
+  const [autoPrint, setAutoPrint] = useState(() => localStorage.getItem('lagom.kds.autoprint') === '1')
+  const autoPrintRef = useRef(autoPrint)
+  const [printQueue, setPrintQueue] = useState([])
 
   const load = useCallback(async () => {
     try {
       const d = await staffApi(`/api/kds/${station}`)
       // Chime when a ticket appears that this screen has not seen yet
       const ids = new Set(d.active.map((x) => x.public_id))
-      if (known.current && [...ids].some((id) => !known.current.has(id)) && !muted) chime()
+      const fresh = known.current ? d.active.filter((x) => !known.current.has(x.public_id)) : []
+      if (fresh.length && !muted) chime()
+      if (fresh.length && autoPrintRef.current) setPrintQueue((q) => [...q, ...fresh])
       known.current = ids
       setData(d)
     } catch {
@@ -80,6 +87,16 @@ function StationScreen() {
     const id = setInterval(load, POLL_MS) // safety net if a live message is missed
     return () => clearInterval(id)
   }, [load])
+
+  // Print queued tickets one by one (the browser shows its print dialog unless kiosk printing is on)
+  useEffect(() => {
+    if (!printQueue.length) return
+    const id = setTimeout(() => {
+      window.print()
+      setPrintQueue((q) => q.slice(1))
+    }, 200)
+    return () => clearTimeout(id)
+  }, [printQueue])
 
   useEffect(() => {
     const onFs = () => setFullscreen(!!document.fullscreenElement)
@@ -104,6 +121,13 @@ function StationScreen() {
     const status = item.status === 'READY' ? 'PREPARING' : 'READY'
     await staffApi(`/api/kds/items/${item.id}/status`, { method: 'POST', body: { status } })
     await load()
+  }
+
+  function toggleAutoPrint() {
+    const next = !autoPrint
+    setAutoPrint(next)
+    autoPrintRef.current = next
+    localStorage.setItem('lagom.kds.autoprint', next ? '1' : '0')
   }
 
   function toggleMute() {
@@ -138,6 +162,9 @@ function StationScreen() {
             {live === 'live' ? t('kds.live') : t('kds.offline')}
           </span>
           <Clock />
+          <IconButton label={autoPrint ? t('kds.autoPrintOff') : t('kds.autoPrintOn')} onClick={toggleAutoPrint}>
+            <Printer size={20} className={autoPrint ? 'text-gold' : ''} />
+          </IconButton>
           <IconButton label={muted ? t('kds.unmute') : t('kds.mute')} onClick={toggleMute}>
             {muted ? <BellOff size={20} /> : <Bell size={20} />}
           </IconButton>
@@ -169,7 +196,8 @@ function StationScreen() {
         ) : (
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
             {active.map((o) => (
-              <Ticket key={o.public_id} order={o} serverTime={data.server_time} busy={busy} onAct={act} onToggleItem={toggleItem} />
+              <Ticket key={o.public_id} order={o} serverTime={data.server_time} busy={busy} onAct={act} onToggleItem={toggleItem}
+                onPrint={() => setPrintQueue((q) => [...q, o])} />
             ))}
           </div>
         )}
@@ -187,6 +215,7 @@ function StationScreen() {
           </section>
         )}
       </main>
+      <KitchenTicket order={printQueue[0]} station={t(`kds.station.${station}`)} />
     </div>
   )
 }
@@ -220,7 +249,7 @@ const STAGE_STYLE = {
   ready: 'border-[#8fae5a] bg-[#1f2a18]',
 }
 
-function Ticket({ order: o, busy, onAct, onToggleItem }) {
+function Ticket({ order: o, busy, onAct, onToggleItem, onPrint }) {
   const { t, lang } = useI18n()
   const now = useNow(1000)
   const waitedMs = Math.max(0, now - new Date(o.paid_at))
@@ -238,7 +267,13 @@ function Ticket({ order: o, busy, onAct, onToggleItem }) {
       <header className="flex items-start justify-between gap-2 px-4 pt-3">
         <div>
           <div className="font-display text-4xl leading-none">#{o.number}</div>
-          <div className="mt-1 text-[15px] font-semibold text-cream/80">{o.table || t('kds.takeaway')}</div>
+          <div className="mt-1 flex items-center gap-2 text-[15px] font-semibold text-cream/80">
+            {o.table || t('kds.takeaway')}
+            <button onClick={onPrint} aria-label={t('kds.printTicket')} title={t('kds.printTicket')}
+              className="grid size-8 place-items-center rounded-full text-cream/60 hover:bg-white/10">
+              <Printer size={16} />
+            </button>
+          </div>
         </div>
         <div className="text-right">
           <div className={`text-2xl font-bold tabular-nums ${timerColor}`}>

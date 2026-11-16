@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useStampCard } from './StampCard'
 import { Link, useNavigate } from 'react-router-dom'
 import { Clock, Plus, ShoppingBag, Trash2 } from 'lucide-react'
 import { ProductImage } from '../../components/ProductImage'
@@ -16,6 +17,8 @@ export function CartPage() {
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
+  const stampCard = useStampCard()
+  const [useReward, setUseReward] = useState(false)
   // One key per version of the cart: tapping twice (or retrying after a network error) never makes two orders
   // eslint-disable-next-line react-hooks/exhaustive-deps -- a new key whenever the cart changes is the point
   const idempotencyKey = useMemo(() => newKey(), [lines])
@@ -75,6 +78,7 @@ export function CartPage() {
           customer_note: note.trim(),
           idempotency_key: idempotencyKey,
           language: lang,
+          use_reward: useReward && !!stampCard?.rewards,
         },
       })
       clear()
@@ -191,6 +195,12 @@ export function CartPage() {
             <p className="mt-3 flex items-center gap-1.5 text-sm text-muted">
               <Clock size={14} /> {t('cart.estimate', { n: quote.estimated_minutes })}
             </p>
+          )}
+          {stampCard?.rewards > 0 && (
+            <label className="mt-4 flex items-start gap-3 rounded-xl bg-series-1/10 p-3 text-sm">
+              <input type="checkbox" className="mt-0.5" checked={useReward} onChange={(e) => setUseReward(e.target.checked)} />
+              <span><b>{t('loyalty.useFree')}</b><span className="block text-muted">{t('loyalty.useFreeHint')}</span></span>
+            </label>
           )}
           <p className="mt-3 text-xs text-muted">{t('cart.priceNote')}</p>
         </section>

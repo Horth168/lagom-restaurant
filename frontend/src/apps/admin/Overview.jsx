@@ -1,3 +1,4 @@
+import { BusyHours } from './BusyHours'
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Card, inputBase, Skeleton } from '../../components/ui'
@@ -116,6 +117,7 @@ export default function Overview() {
                 </ul>
               )}
             </Card>
+            <BusyHours />
           </div>
         </div>
       )}

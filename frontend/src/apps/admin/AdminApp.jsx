@@ -1,10 +1,11 @@
 import { lazy, Suspense, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import {
-  Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, QrCode, Receipt, Settings, ShoppingBag,
-  ScrollText, Sun, Users, UtensilsCrossed, Wallet, X,
+  Boxes, ChefHat, Globe, Landmark, LayoutDashboard, LogOut, Menu as MenuIcon, Moon, Percent, QrCode, Receipt, Settings, ShoppingBag,
+  ScrollText, Star, Sun, Users, UtensilsCrossed, Wallet, X,
 } from 'lucide-react'
 import { LogoHorizontal } from '../../components/Logo'
+import { ServiceAlerts } from '../../components/ServiceAlerts'
 import { ToastProvider } from '../../components/ui'
 import { LANGUAGES, useI18n } from '../../i18n'
 import { useStaff } from '../../lib/staffAuth'
@@ -21,12 +22,16 @@ const Finance = lazy(() => import('./Finance'))
 const StaffPage = lazy(() => import('./StaffPage'))
 const AuditLog = lazy(() => import('./AuditLog'))
 const MyAccount = lazy(() => import('./MyAccount'))
+const Deals = lazy(() => import('./Deals'))
+const Reviews = lazy(() => import('./Reviews'))
 
 const NAV = [
   { to: 'overview', label: 'admin.nav.overview', icon: LayoutDashboard, perm: 'dashboard.view', el: <Overview /> },
   { to: 'orders', label: 'admin.nav.orders', icon: Receipt, perm: 'orders.view', el: <Orders /> },
   { to: 'payments', label: 'admin.nav.payments', icon: Wallet, perm: 'payments.view', el: <Payments /> },
   { to: 'menu', label: 'admin.nav.menu', icon: UtensilsCrossed, perm: 'menu.view', el: <MenuAdmin /> },
+  { to: 'deals', label: 'admin.nav.deals', icon: Percent, perm: 'menu.view', el: <Deals /> },
+  { to: 'reviews', label: 'admin.nav.reviews', icon: Star, perm: 'dashboard.view', el: <Reviews /> },
   { to: 'inventory', label: 'admin.nav.inventory', icon: Boxes, perm: 'inventory.view', el: <Inventory /> },
   { to: 'finance', label: 'admin.nav.finance', icon: Landmark, perm: 'finance.view', el: <Finance /> },
   { to: 'tables', label: 'admin.nav.tables', icon: QrCode, perm: 'tables.manage', el: <Tables /> },
@@ -130,7 +135,10 @@ function Shell({ items, children }) {
         <button onClick={() => setOpen(true)} aria-label={t('admin.menu')}><MenuIcon size={22} /></button>
         <LogoHorizontal height={22} className="text-brand" />
       </header>
-      <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</main>
+      <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        <ServiceAlerts className="mb-4" />
+        {children}
+      </main>
     </div>
   )
 }

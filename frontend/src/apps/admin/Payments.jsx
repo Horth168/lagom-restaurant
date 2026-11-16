@@ -141,8 +141,57 @@ export default function Payments() {
           </Card>
         )}
       </div>
+      <ShiftHistory />
       <OrderDetail publicId={openId} onClose={() => setOpenId(null)} onChanged={load} />
     </>
+  )
+}
+
+/** Cash drawer shifts: expected vs counted, so missing cash is visible to the owner. */
+function ShiftHistory() {
+  const { t } = useI18n()
+  const { staffApi } = useStaff()
+  const [rows, setRows] = useState(null)
+  useEffect(() => {
+    staffApi('/api/admin/shifts').then(setRows).catch(() => setRows([]))
+  }, [staffApi])
+  if (!rows) return null
+  const when = (d) => new Date(d).toLocaleString(appLocale(), { dateStyle: 'medium', timeStyle: 'short' })
+  return (
+    <Card title={t('shift.history')} className="mt-6">
+      {rows.length === 0 ? <p className="text-sm text-muted">{t('shift.none')}</p> : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="text-left text-muted">
+                <th className="py-2 font-medium">{t('shift.when')}</th>
+                <th className="py-2 font-medium">{t('shift.who')}</th>
+                <th className="py-2 text-right font-medium">{t('shift.expected')}</th>
+                <th className="py-2 text-right font-medium">{t('shift.counted')}</th>
+                <th className="py-2 text-right font-medium">{t('shift.difference')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {rows.map((s) => {
+                const du = s.difference_usd_cents
+                const dk = s.difference_khr
+                return (
+                  <tr key={s.id}>
+                    <td className="py-2">{when(s.opened_at)}{s.closed_at ? ` → ${new Date(s.closed_at).toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' })}` : ''}</td>
+                    <td className="py-2">{s.closed_by || s.opened_by}{s.note && <span className="block text-xs text-muted">“{s.note}”</span>}</td>
+                    <td className="py-2 text-right tabular-nums">{formatUSD(s.expected_usd_cents)}{s.expected_khr ? <span className="block text-xs text-muted">{formatKHR(s.expected_khr)}</span> : null}</td>
+                    <td className="py-2 text-right tabular-nums">{s.status === 'OPEN' ? <Badge tone="info">{t('shift.stillOpen')}</Badge> : <>{formatUSD(s.counted_usd_cents)}{s.counted_khr ? <span className="block text-xs text-muted">{formatKHR(s.counted_khr)}</span> : null}</>}</td>
+                    <td className={`py-2 text-right font-semibold tabular-nums ${du || dk ? 'text-danger' : 'text-series-1'}`}>
+                      {s.status === 'OPEN' ? '—' : du === 0 && dk === 0 ? '✓' : `${du >= 0 ? '+' : '−'}${formatUSD(Math.abs(du))}${dk ? ` · ${dk > 0 ? '+' : '−'}${formatKHR(Math.abs(dk))}` : ''}`}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   )
 }
 

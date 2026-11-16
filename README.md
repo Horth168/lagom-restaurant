@@ -25,6 +25,7 @@ POS and the admin dashboard.
 |---|---|---|
 | `/t/<table QR code>` | Customers | Menu, order, pay (KHQR or cash), live order tracking |
 | `/tg` | Customers in Telegram | Same menu as a Telegram Mini App, for pickup at the counter |
+| `/menu` | Anyone | View-only menu with photos, prices and deals (share on social media) |
 | `/login` | Staff | Sign in |
 | `/admin` | Owner, admin, inventory staff | Overview, orders, payments, menu, inventory, finance, tables & QR, settings |
 | `/pos` | Cashiers | Counter orders, discounts, cash or KHQR, 80 mm receipts |
@@ -41,3 +42,4 @@ POS and the admin dashboard.
 - [Telegram alerts, Mini App and installing on phones](docs/TELEGRAM_SETUP.md)
 - [Put LAGOM online (Cloudflare, Render, Neon, R2)](docs/DEPLOYMENT.md)
 - [Security](docs/SECURITY.md)
+- [Running LAGOM day to day (shifts, deals, stamp card, ratings, printing, backup)](docs/DAILY_OPERATIONS.md)

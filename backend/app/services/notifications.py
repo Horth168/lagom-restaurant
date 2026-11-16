@@ -96,6 +96,10 @@ def tell_customer(db: Session, order: Order, kind: str) -> None:
     if not s or not s.telegram_user_id:
         return
     text = CUSTOMER_TEXT[kind].get(s.language, CUSTOMER_TEXT[kind]["en"]).format(n=order.display_number)
+    if kind == "paid":
+        from app.services.loyalty import customer_line
+
+        text += customer_line(db, order, s)
     user_id = s.telegram_user_id
 
     @event.listens_for(db, "after_commit", once=True)
@@ -161,4 +165,22 @@ def maybe_send_daily_summary(db: Session, now: datetime | None = None) -> bool:
     app_settings.set_setting(db, "daily_summary_last_sent", today)
     db.commit()
     _safely(lambda: tg.notify(daily_summary_text(db, local.date())))
+    return True
+
+
+# ---------------------------------------------------------------- weekly backup reminder
+def maybe_send_backup_reminder(db: Session, now: datetime | None = None) -> bool:
+    """Monday from 10:00 (restaurant time), once a week: remind the owner to download a backup."""
+    if not _enabled(db, "backup_reminder") or not tg.enabled() and tg.sent_log is None:
+        return False
+    local = (now or utcnow()).astimezone(ZoneInfo(app_settings.get_setting(db, "timezone")))
+    if local.weekday() != 0 or local.hour < 10:
+        return False
+    week = f"{local.isocalendar().year}-W{local.isocalendar().week:02d}"
+    if app_settings.get_setting(db, "backup_reminder_last_week") == week:
+        return False
+    app_settings.set_setting(db, "backup_reminder_last_week", week)
+    db.commit()
+    _safely(tg.notify, "💾 <b>Weekly backup</b>\nPlease download this week's LAGOM backup: "
+                       "Admin → Settings → Backup → Download. Keep the file somewhere safe (not on this phone only).")
     return True

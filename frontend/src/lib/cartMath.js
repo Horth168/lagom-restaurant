@@ -27,12 +27,22 @@ export function missingGroups(product, selected) {
   return product.option_groups.filter((g) => (selected[g.id] || []).length < g.min_select)
 }
 
+/** Price after a timed deal (percent off), rounded like the server (half to even). Preview only. */
+export function dealPrice(cents, percent) {
+  if (!percent) return cents
+  const exact = (cents * (100 - percent)) / 100
+  const floor = Math.floor(exact)
+  const diff = exact - floor
+  if (Math.abs(diff - 0.5) < 1e-9) return floor % 2 === 0 ? floor : floor + 1
+  return Math.round(exact)
+}
+
 export function previewUnitPrice(product, selected) {
   let cents = product.price_usd_cents
   for (const g of product.option_groups) {
     for (const o of g.options) if ((selected[g.id] || []).includes(o.id)) cents += o.price_delta_usd_cents
   }
-  return cents
+  return dealPrice(cents, product.deal?.percent)
 }
 
 export function selectedOptionIds(product, selected) {

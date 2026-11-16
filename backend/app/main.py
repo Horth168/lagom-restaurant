@@ -11,10 +11,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import (audit_log, auth, finance, inventory, kds, menu_admin, orders_admin, orders_public, payments_admin, pos,
-                     public, settings, staff, tables)
+from app.api import (audit_log, auth, extras, finance, inventory, kds, menu_admin, orders_admin, orders_public,
+                     payments_admin, pos, public, settings, staff, tables)
 from app.services import inventory as _inventory_hooks  # noqa: F401  (deducts stock when orders are paid)
 from app.services import notifications as _notification_hooks  # noqa: F401  (Telegram alerts)
+from app.services import loyalty as _loyalty_hooks  # noqa: F401  (Telegram stamp card)
 from app.config import get_settings
 from app.db import SessionLocal, engine
 
@@ -29,12 +30,13 @@ if not log.handlers:
 
 
 def _expire_once() -> int:
-    from app.services.notifications import maybe_send_daily_summary
+    from app.services.notifications import maybe_send_backup_reminder, maybe_send_daily_summary
     from app.services.payments import expire_due_orders
 
     with SessionLocal() as db:
         n = expire_due_orders(db)
         maybe_send_daily_summary(db)  # once a day, after closing time (Settings)
+        maybe_send_backup_reminder(db)  # once a week (Monday morning)
         return n
 
 
@@ -132,7 +134,7 @@ def create_app() -> FastAPI:
 
     for r in (auth.router, staff.router, settings.router, public.router, tables.router, orders_public.router,
               payments_admin.router, kds.router, menu_admin.router, orders_admin.router, pos.router,
-              inventory.router, finance.router, audit_log.router):
+              inventory.router, finance.router, audit_log.router, extras.router):
         app.include_router(r)
     # Product photos saved on this server (when Cloudflare R2 is not configured)
     from fastapi.staticfiles import StaticFiles

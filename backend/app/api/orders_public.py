@@ -28,6 +28,7 @@ class CheckoutIn(BaseModel):
     # A random id made by the phone for this checkout; resubmitting returns the same order
     idempotency_key: str = Field(min_length=16, max_length=80, pattern=r"^[A-Za-z0-9_-]+$")
     language: str = Field("en", pattern="^(en|km|zh)$")
+    use_reward: bool = False  # Telegram stamp card: make one eligible item free
 
 
 class PayIn(BaseModel):
@@ -53,12 +54,14 @@ def order_out(order: Order, include_payment: bool = True) -> dict:
         "estimated_ready_minutes": order.estimated_ready_minutes,
         "subtotal_usd_cents": order.subtotal_usd_cents,
         "discount_usd_cents": order.discount_usd_cents,
+        "discount_reason": order.discount_reason,
         "total_usd_cents": order.total_usd_cents,
         "total_khr": order.total_khr,
         "khr_per_usd": str(order.khr_per_usd),
         "customer_note": order.customer_note,
         "items": [
             {
+                "id": i.id,
                 "name": {"en": i.name_en, "km": i.name_km or i.name_en, "zh": i.name_zh or i.name_en},
                 "options": [{"en": o["name_en"], "km": o.get("name_km") or o["name_en"], "zh": o.get("name_zh") or o["name_en"]}
                             for o in i.options],
@@ -114,8 +117,28 @@ def checkout(body: CheckoutIn, db: Session = Depends(get_db), session: TableSess
     except PricingError as e:
         raise HTTPException(422, {"message": e.message, "line": e.line, "code": e.code})
     channel = OrderChannel.QR if session.table_id else OrderChannel.TELEGRAM  # Telegram Mini App = pickup
+    discount, reason, card = 0, "", None
+    if body.use_reward:
+        from app.services import loyalty
+
+        card = loyalty.card_for(db, session.telegram_user_id) if session.telegram_user_id and loyalty.enabled(db) else None
+        if card is None or card.rewards < 1:
+            raise HTTPException(422, "You have no free item on your stamp card yet.")
+        discount, name = loyalty.free_item_discount(db, priced.lines)
+        if not discount:
+            raise HTTPException(422, "Add an item from the stamp card categories to use your free item.")
+        reason = f"Stamp card: 1 free {name}"
     order = create_order(db, priced, channel=channel, session=session, idempotency_key=body.idempotency_key,
-                         customer_note=body.customer_note, language=body.language)
+                         customer_note=body.customer_note, language=body.language,
+                         discount_usd_cents=discount, discount_reason=reason)
+    if card is not None and discount and not order.loyalty_reward_used:
+        card.rewards -= 1  # reserved now; given back if this order expires or is cancelled
+        card.rewards_used += 1
+        order.loyalty_reward_used = True
+    if order.total_usd_cents == 0 and order.status == OrderStatus.PENDING_PAYMENT:
+        from app.services.payments import confirm_free
+
+        confirm_free(db, order)  # nothing to pay: straight to the kitchen
     session.last_seen_at = utcnow()
     db.commit()
     return order_out(order)
@@ -134,6 +157,14 @@ def pay(public_id: str, body: PayIn, db: Session = Depends(get_db),
         raise HTTPException(e.status_code, e.message)
     db.refresh(order)
     return order_out(order)
+
+
+@router.get("/api/public/loyalty")
+def my_stamp_card(db: Session = Depends(get_db), session: TableSession = Depends(current_table_session)):
+    """Stamp card of the Telegram customer using this session (table QR customers: not enabled)."""
+    from app.services import loyalty
+
+    return loyalty.summary(db, session.telegram_user_id)
 
 
 @router.get("/api/public/orders")
